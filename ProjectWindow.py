@@ -5,10 +5,10 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout
 
 
 class ProjectWindow(QMainWindow):
-    def __init__(self, projectName):
+    def __init__(self, projectName: str):
         super().__init__()
-        self.setupUi(self)
         self.projectName = projectName
+        self.setupUi(self)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
@@ -82,8 +82,9 @@ class ProjectWindow(QMainWindow):
             padding: 2px;
         ''')
 
-        self.projectName = QtWidgets.QLabel(parent=self.splitter)
-        self.projectName.setObjectName("projectName")
+        self.projectNameLabel = QtWidgets.QLabel(parent=self.splitter)
+        self.projectNameLabel.setObjectName("projectName")
+        self.projectNameLabel.setText(self.projectName)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
@@ -101,7 +102,7 @@ class ProjectWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Project Manager"))
         self.backButton.setText(_translate("MainWindow", "<- Назад"))
-        self.projectName.setText(_translate("MainWindow", "TextLabel"))
+        self.projectNameLabel.setText(_translate("MainWindow", self.projectName))
 
     def restore_console_prefix(self):
         '''Эта функция восстанавливает префикс "> " в вводе консоли, если
@@ -151,12 +152,29 @@ class Task(QtWidgets.QWidget):
             background-color: rgb(83, 83, 83);
         ''')
         self.taskLayout.addWidget(self.addDeadlineBtn)
-
         self.setLayout(self.taskLayout)
+
+        self.calendarWidget = QtWidgets.QCalendarWidget()
+        self.setDateBtn = QtWidgets.QPushButton("Выбрать эту дату")
+        self.setDateBtn.clicked.connect(self.selectDeadline)
+        self.dateLayout = QVBoxLayout()
+        self.dateLayout.addWidget(self.calendarWidget)
+        self.dateLayout.addWidget(self.setDateBtn)
+        self.dateWidget = QtWidgets.QWidget()
+        self.dateWidget.setLayout(self.dateLayout)
+        # показываем календарь если кнопка "Добавить дедлайн" была нажата
+        self.addDeadlineBtn.clicked.connect(lambda: self.dateWidget.show())
+
+    def selectDeadline(self):
+        self.deadline = self.calendarWidget.selectedDate()
+        self.dateWidget.hide()
+        self.addDeadlineBtn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
+        self.addDeadlineBtn.blockSignals(True)
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ProjectWindow("New Project")
+    ex.add_task("Test")
     ex.show()
     sys.exit(app.exec())
