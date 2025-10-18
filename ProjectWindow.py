@@ -2,6 +2,7 @@ import sys
 import string
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout
+from ConsoleController import Console
 
 
 class ProjectWindow(QMainWindow):
@@ -9,6 +10,7 @@ class ProjectWindow(QMainWindow):
         super().__init__()
         self.projectName = projectName
         self.setupUi(self)
+        self.console = Console(self)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
@@ -33,7 +35,9 @@ class ProjectWindow(QMainWindow):
         self.consoleInput.setStyleSheet('''
             background: black;
             color: white;
+            font-size: 16px;
         ''')
+        self.consoleInput.returnPressed.connect(self.executeCommand)
 
         self.consoleOutput = QtWidgets.QTextBrowser(parent=self.ConsoleSplitter)
         self.consoleOutput.setObjectName("consoleOutput")
@@ -41,6 +45,7 @@ class ProjectWindow(QMainWindow):
             background: black;
             color: white;
             border-radius: 5px;
+            font-size: 16px;
         ''')
 
         self.treeCheckBoxCont = QtWidgets.QSplitter(parent=self.centralwidget)
@@ -122,13 +127,20 @@ class ProjectWindow(QMainWindow):
                 self.consoleInput.setText("> ")
             self.consoleInput.blockSignals(False) # восстанавливаем передачу сигналов
 
-    def add_task(self, taskName: str):
+    def addTask(self, taskName: str):
         '''Добавление задачи в список задач'''
         task = Task(taskName)
         taskInList = QtWidgets.QListWidgetItem()
         taskInList.setSizeHint(task.sizeHint())
         self.listWidget.addItem(taskInList)
         self.listWidget.setItemWidget(taskInList, task)
+
+    def deleteTask(self, taskNumber: int):
+        '''Удаление задачи из списка по номеру'''
+        self.listWidget.takeItem(taskNumber - 1)
+
+    def executeCommand(self):
+        self.console.commandExecuter()
 
 
 class Task(QtWidgets.QWidget):
@@ -175,6 +187,5 @@ class Task(QtWidgets.QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ProjectWindow("New Project")
-    ex.add_task("Test")
     ex.show()
     sys.exit(app.exec())
