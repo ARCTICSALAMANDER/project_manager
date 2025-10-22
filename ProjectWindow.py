@@ -1,4 +1,6 @@
+from genericpath import exists
 import sys
+import os
 import string
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout
@@ -11,6 +13,7 @@ class ProjectWindow(QMainWindow):
         self.projectName = projectName
         self.setupUi(self)
         self.console = Console(self)
+        self.projectFolder = ""
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
@@ -135,9 +138,32 @@ class ProjectWindow(QMainWindow):
         self.listWidget.addItem(taskInList)
         self.listWidget.setItemWidget(taskInList, task)
 
-    def deleteTask(self, taskNumber: int):
+    def deleteTask(self, taskNumber: int) -> bool:
         '''Удаление задачи из списка по номеру'''
-        self.listWidget.takeItem(taskNumber - 1)
+        helper = self.listWidget.takeItem(taskNumber - 1)
+        if helper == None:
+            return False
+        else:
+            return True
+        
+    def bindFolder(self, projectFolderPath: str):
+        '''Метод для привязки папки. Вернет сообщение об ошибке либо
+        об успехе, во втором случае привяжет папку и True/False в зависимости
+        от того, была ли привязана папка или вылетела ошибка.'''
+        # форматируем строку: убираем лишние символы, слэши и т.д.
+        normPath = os.path.normpath(projectFolderPath) 
+
+        if not os.access(normPath, os.R_OK): # проверяем, есть ли доступ к папке
+            return "There is no access to this directory", False
+        
+        if not os.path.exists(normPath): # проверяем папку на существование
+            return f"There is no directory at {normPath}", False
+        
+        if not os.path.isdir(normPath): # проверяем, является ли указанный путь путем к папке
+            return "This path does not lead to a directory", False
+        
+        self.projectFolder = normPath
+        return "Folder successfully binded!", True
 
     def executeCommand(self):
         self.console.commandExecuter()
