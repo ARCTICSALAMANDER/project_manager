@@ -22,8 +22,19 @@ class Console():
             except ValueError:
                 self.projectWindow.consoleOutput.setPlainText(f"INVALID ARGUMENT ERROR: \n{taskNumber} cannot be a argument. Please, check existence of a task with this number and if this argument is a integer")
                 return
-            self.projectWindow.deleteTask(int(taskNumber))
-            self.projectWindow.consoleOutput.setPlainText(f"Successfully deleted '{taskNumber}' from the task list")
+            itemCheck = self.projectWindow.deleteTask(int(taskNumber))
+            if not itemCheck:
+                self.projectWindow.consoleOutput.setPlainText(f"INVALID ARGUMENT ERROR:\nThere is no task with number {taskNumber}")
+            else:
+                self.projectWindow.consoleOutput.setPlainText(f"Successfully deleted task №{taskNumber} from the task list")
+        elif command[:space_index] == 'bind_folder':
+            projectFolderPath = command[space_index + 1:]
+            message, result = self.projectWindow.bindFolder(projectFolderPath)
+            if result:
+                self.projectFolderPath = projectFolderPath
+            else:
+                self.projectWindow.consoleOutput.setPlainText(f"FOLDER BINDING ERROR:\n{message}")
         else:
-            self.projectWindow.consoleOutput.setPlainText(f"SYNTAX ERROR: \nthere is no command '{command[:space_index]}'")
+            self.projectWindow.consoleOutput.setPlainText(f"SYNTAX ERROR:\nthere is no command '{command[:space_index]}'")
 
+# "C:\Users\rusla\OneDrive\Desktop\LMS projects\PyQt project"
