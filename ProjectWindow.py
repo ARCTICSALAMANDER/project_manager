@@ -1,6 +1,4 @@
-from genericpath import exists
 import sys
-import os
 import string
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout
@@ -12,6 +10,7 @@ class ProjectWindow(QMainWindow):
         super().__init__()
         self.projectName = projectName
         self.setupUi(self)
+        self.addDefaultTasks()
         self.console = Console(self)
         self.projectFolder = ""
 
@@ -145,6 +144,22 @@ class ProjectWindow(QMainWindow):
             return False
         else:
             return True
+        
+    def addDefaultTasks(self):
+        '''Добавление стандартных задач в каждый проект'''
+        self.addTask("Написать ТЗ")
+
+        auto_task1 = Task("Создать Git-репозиторий для проекта")
+        auto_task1_item = QtWidgets.QListWidgetItem()
+        auto_task1_item.setSizeHint(auto_task1.sizeHint())
+        self.listWidget.addItem(auto_task1_item)
+        self.listWidget.setItemWidget(auto_task1_item, auto_task1)
+
+        auto_task2 = Task("Сделать первый коммит")
+        auto_task2_item = QtWidgets.QListWidgetItem()
+        auto_task2_item.setSizeHint(auto_task2.sizeHint())
+        self.listWidget.addItem(auto_task2_item)
+        self.listWidget.setItemWidget(auto_task2_item, auto_task2)
 
     def executeCommand(self):
         self.console.commandExecuter()
