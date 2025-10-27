@@ -50,21 +50,20 @@ class Console():
 
     def bindFolder(self, command: str, space_index: int) -> bool:
         '''Метод привязки папки через Git'''
-        projectFolderPath = command[space_index + 1:]
+        projectFolder = command[space_index + 1:]
         status = self.gitManager.bindGit()
         if not status:
             self.projectWindow.consoleOutput.setPlainText(
                 f"ERROR:\nGit not found. Check if it had been added to PATH")
 
-        status = self.gitManager.bindFolder(projectFolderPath)
+        status = self.gitManager.bindFolder(projectFolder)
         if status:
             self.projectWindow.consoleOutput.setPlainText(
                 "Folder binded successfully!")
             if self.gitManager.isRepos:
-                print("Repos seen")
                 self.checkDefaultTask(1)
                 # проверяем, есть ли коммиты и отмечаем соответствующий чекбокс
-                if self.gitManager.firstCommitCheck(projectFolderPath):
+                if self.gitManager.firstCommitCheck():
                     self.checkDefaultTask(2)
 
             return True
@@ -97,27 +96,27 @@ class GitManager:
             self.gitPath = gitPath
             return True
 
-    def bindFolder(self, folderPath: str) -> bool:
+    def bindFolder(self, projectFolder: str) -> bool:
         '''Привязка папки. Вернет False  в том случае, если папки не существует. Привяжет репозиторий, если он есть.'''
-        folderPath = os.path.normpath(folderPath)
-        if folderPath[0] == '"':  # убираем кавычки, если они есть
-            folderPath = folderPath[1:]
+        projectFolder = os.path.normpath(projectFolder)
+        if projectFolder[0] == '"':  # убираем кавычки, если они есть
+            projectFolder = projectFolder[1:]
 
-        if folderPath[-1] == '"':
-            folderPath = folderPath[:-1]
+        if projectFolder[-1] == '"':
+            projectFolder = projectFolder[:-1]
 
-        status = self.reposCheck(folderPath)
+        status = self.reposCheck(projectFolder)
         if status:
-            self.projectFolder = folderPath
+            self.projectFolder = projectFolder
             return True
         else:
             return False
 
-    def reposCheck(self, folderPath: str) -> bool:
-        '''Проверка на наличие репозитория в привязанной папке. Вернет True если существует папка и укажет self.isRepos = True, 
-        и False, если не существует папка'''
+    def reposCheck(self, projectFolder) -> bool:
+        '''Проверка на наличие репозитория в привязанной папке. Вернет True если существует папка и укажет self.isRepos = True,
+        если есть репозиторий в ней, и False, если не существует папка'''
         status = subprocess.run(
-            [self.gitPath, '-C', folderPath, 'status'], capture_output=True, text=True)
+            [self.gitPath, '-C', projectFolder, 'status'], capture_output=True, text=True)
         if status.returncode != 0:  # status будет равен 0 в том случае, если папка существует и в ней есть репозиторий
             errorText = status.stderr.lower()  # смотрим текст ошибки
             if "not a git repository" in errorText:  # если папка есть, но в ней нет репозитория
@@ -134,11 +133,15 @@ class GitManager:
             self.isRepos = True
             return True
 
-    def firstCommitCheck(self, folderPath: str) -> bool:
+    def firstCommitCheck(self) -> bool:
         '''Метод проверки на наличие коммитов. Вернет True, если коммиты есть,
         и False, если нет'''
-        commitStatus = subprocess.run([self.gitPath, '-C', folderPath, 'rev-list', '-n', '1', '--all'], capture_output=True, text=True)
-        if commitStatus:
-            return True
+        if self.projectFolder:
+            commitStatus = subprocess.run(
+                [self.gitPath, '-C', self.projectFolder, 'rev-list', '-n', '1', '--all'], capture_output=True, text=True)
+            if commitStatus:
+                return True
+            else:
+                return False
         else:
             return False
