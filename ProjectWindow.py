@@ -1,7 +1,9 @@
 import sys
 import string
 from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt
 from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from ConsoleController import Console
 
 
@@ -41,7 +43,8 @@ class ProjectWindow(QMainWindow):
         ''')
         self.consoleInput.returnPressed.connect(self.executeCommand)
 
-        self.consoleOutput = QtWidgets.QTextBrowser(parent=self.ConsoleSplitter)
+        self.consoleOutput = QtWidgets.QTextBrowser(
+            parent=self.ConsoleSplitter)
         self.consoleOutput.setObjectName("consoleOutput")
         self.consoleOutput.setStyleSheet('''
             background: black;
@@ -49,6 +52,8 @@ class ProjectWindow(QMainWindow):
             border-radius: 5px;
             font-size: 16px;
         ''')
+        self.consoleOutput.setPlainText(
+            'Type "help" to see the list of existing commands')
 
         self.treeCheckBoxCont = QtWidgets.QSplitter(parent=self.centralwidget)
         self.treeCheckBoxCont.setGeometry(QtCore.QRect(20, 40, 491, 511))
@@ -62,6 +67,15 @@ class ProjectWindow(QMainWindow):
             border: 1px solid white;
             border-radius: 5px;
             color: white;
+        ''')
+        self.treeView.setModel(IdeaMap(self))
+        self.treeView.setStyleSheet('''
+            QTreeView::item{
+                background-color: rgb(138, 138, 138);     
+                color: white;
+                font-family: sans-serif;
+                font-size: 18px;                   
+            }
         ''')
 
         self.listWidget = QtWidgets.QListWidget(parent=self.treeCheckBoxCont)
@@ -109,25 +123,28 @@ class ProjectWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Project Manager"))
         self.backButton.setText(_translate("MainWindow", "<- Назад"))
-        self.projectNameLabel.setText(_translate("MainWindow", self.projectName))
+        self.projectNameLabel.setText(
+            _translate("MainWindow", self.projectName))
 
     def restore_console_prefix(self):
         '''Эта функция восстанавливает префикс "> " в вводе консоли, если
         пользователь его удалит.'''
         text = self.consoleInput.text()
         if text[:2] != "> ":
-            self.consoleInput.blockSignals(True) # это нужно, чтобы избежать рекурсивного вызова
+            # это нужно, чтобы избежать рекурсивного вызова
+            self.consoleInput.blockSignals(True)
             index = 0
             for i in range(len(text)):
                 if text[i] in string.ascii_lowercase:
                     index = i
                     break
-            
-            if index > 0: # специально для случая, если в консоли ничего нет, но пользователь нажмет бэкспейс
+
+            if index > 0:  # специально для случая, если в консоли ничего нет, но пользователь нажмет бэкспейс
                 self.consoleInput.setText("> " + text[index:])
             else:
                 self.consoleInput.setText("> ")
-            self.consoleInput.blockSignals(False) # восстанавливаем передачу сигналов
+            # восстанавливаем передачу сигналов
+            self.consoleInput.blockSignals(False)
 
     def addTask(self, taskName: str):
         '''Добавление задачи в список задач'''
@@ -144,7 +161,7 @@ class ProjectWindow(QMainWindow):
             return False
         else:
             return True
-        
+
     def addDefaultTasks(self):
         '''Добавление стандартных задач в каждый проект'''
         self.addTask("Написать ТЗ")
@@ -204,6 +221,36 @@ class Task(QtWidgets.QWidget):
         self.dateWidget.hide()
         self.addDeadlineBtn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
         self.addDeadlineBtn.blockSignals(True)
+
+
+class Idea(QStandardItem):
+    '''Класс идеи'''
+
+    def __init__(self, text: str, parentIdea=None):
+        super().__init__(text)
+        self.parentIdea = parentIdea
+        self.childs = []
+
+    def addChild(self, child) -> bool:
+        '''Метод добавления дочерней мысли'''
+        if isinstance(child, Idea):
+            self.childs.append(child)
+            return True
+        else:
+            return False
+
+
+class IdeaMap(QStandardItemModel):
+    '''Класс карты мыслей'''
+
+    def __init__(self, projectWindow: ProjectWindow):
+        super().__init__(projectWindow.treeView)
+        self.rootIdea = Idea("Первая мысль")
+        self.appendRow(self.rootIdea)
+
+    def addIdea(self, text: str, parentIdea: Idea):
+        '''Метод добавления идеи в карту мыслей'''
+        parentIdea.childs.append(Idea(text, parentIdea))
 
 
 if __name__ == '__main__':
