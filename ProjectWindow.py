@@ -1,10 +1,9 @@
 import sys
 import string
 from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt
-from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout
-from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QGraphicsView
 from ConsoleController import Console
+from Idea_map import Idea, IdeaMap
 
 
 class ProjectWindow(QMainWindow):
@@ -60,22 +59,16 @@ class ProjectWindow(QMainWindow):
         self.treeCheckBoxCont.setOrientation(QtCore.Qt.Orientation.Vertical)
         self.treeCheckBoxCont.setObjectName("treeCheckBoxCont")
 
-        self.treeView = QtWidgets.QTreeView(parent=self.treeCheckBoxCont)
+        self.ideaMap = IdeaMap(self)
+        self.ideaMap.setSceneRect(10, 40, 100, 250)
+        self.treeView = QGraphicsView(parent=self.treeCheckBoxCont)
         self.treeView.setObjectName("treeView")
+        self.treeView.setScene(self.ideaMap)
         self.treeView.setStyleSheet('''
             background-color: rgb(15, 15, 15);
             border: 1px solid white;
             border-radius: 5px;
             color: white;
-        ''')
-        self.treeView.setModel(IdeaMap(self))
-        self.treeView.setStyleSheet('''
-            QTreeView::item{
-                background-color: rgb(138, 138, 138);     
-                color: white;
-                font-family: sans-serif;
-                font-size: 18px;                   
-            }
         ''')
 
         self.listWidget = QtWidgets.QListWidget(parent=self.treeCheckBoxCont)
@@ -87,6 +80,9 @@ class ProjectWindow(QMainWindow):
             color: white;
         ''')
         self.listWidget.setSpacing(2)
+
+        self.treeCheckBoxCont.addWidget(self.treeView)
+        self.treeCheckBoxCont.addWidget(self.listWidget)
 
         self.splitter = QtWidgets.QSplitter(parent=self.centralwidget)
         self.splitter.setGeometry(QtCore.QRect(20, 10, 491, 21))
@@ -221,36 +217,6 @@ class Task(QtWidgets.QWidget):
         self.dateWidget.hide()
         self.addDeadlineBtn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
         self.addDeadlineBtn.blockSignals(True)
-
-
-class Idea(QStandardItem):
-    '''Класс идеи'''
-
-    def __init__(self, text: str, parentIdea=None):
-        super().__init__(text)
-        self.parentIdea = parentIdea
-        self.childs = []
-
-    def addChild(self, child) -> bool:
-        '''Метод добавления дочерней мысли'''
-        if isinstance(child, Idea):
-            self.childs.append(child)
-            return True
-        else:
-            return False
-
-
-class IdeaMap(QStandardItemModel):
-    '''Класс карты мыслей'''
-
-    def __init__(self, projectWindow: ProjectWindow):
-        super().__init__(projectWindow.treeView)
-        self.rootIdea = Idea("Первая мысль")
-        self.appendRow(self.rootIdea)
-
-    def addIdea(self, text: str, parentIdea: Idea):
-        '''Метод добавления идеи в карту мыслей'''
-        parentIdea.childs.append(Idea(text, parentIdea))
 
 
 if __name__ == '__main__':
