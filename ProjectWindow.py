@@ -58,18 +58,25 @@ class ProjectWindow(QMainWindow):
         self.treeCheckBoxCont.setGeometry(QtCore.QRect(20, 40, 491, 511))
         self.treeCheckBoxCont.setOrientation(QtCore.Qt.Orientation.Vertical)
         self.treeCheckBoxCont.setObjectName("treeCheckBoxCont")
-
-        self.ideaMap = IdeaMap(self)
-        self.ideaMap.setSceneRect(10, 40, 100, 250)
+        
         self.treeView = QGraphicsView(parent=self.treeCheckBoxCont)
         self.treeView.setObjectName("treeView")
-        self.treeView.setScene(self.ideaMap)
         self.treeView.setStyleSheet('''
             background-color: rgb(15, 15, 15);
             border: 1px solid white;
             border-radius: 5px;
             color: white;
         ''')
+        self.ideaMap = IdeaMap(self)
+        self.ideaMap.setSceneRect(10, 40, 400, 150)
+        self.treeView.setScene(self.ideaMap)
+        # разрешаем скролл
+        self.treeView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.treeView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        # разрешаем перетаскивать курсором
+        self.treeView.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        self.treeView.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
         self.listWidget = QtWidgets.QListWidget(parent=self.treeCheckBoxCont)
         self.listWidget.setObjectName("listWidget")
@@ -222,5 +229,16 @@ class Task(QtWidgets.QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ProjectWindow("New Project")
+    print(f"{ex.ideaMap.height()}, {ex.ideaMap.width()}")
+    ex.ideaMap.addIdea("Test1", ex.ideaMap.rootIdea)
+    ex.ideaMap.addIdea("Test2", ex.ideaMap.rootIdea)
+    ex.ideaMap.addIdea("Test11", ex.ideaMap.rootIdea.childs[0])
+    ex.ideaMap.addIdea("Test12", ex.ideaMap.rootIdea.childs[0])
+    ex.ideaMap.addIdea("Test21", ex.ideaMap.rootIdea.childs[1])
+    ex.ideaMap.addIdea("Test22", ex.ideaMap.rootIdea.childs[1])
+    ex.ideaMap.addIdea("Test111", ex.ideaMap.rootIdea.childs[0].childs[0])
+    ex.ideaMap.addIdea("Test112", ex.ideaMap.rootIdea.childs[0].childs[0])
+    # ex.ideaMap.addIdea("Test113", ex.ideaMap.rootIdea.childs[0])
+    # ex.ideaMap.addIdea("Test114", ex.ideaMap.rootIdea.childs[0])
     ex.show()
     sys.exit(app.exec())
