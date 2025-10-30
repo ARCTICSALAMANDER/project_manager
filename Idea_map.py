@@ -7,12 +7,13 @@ from PyQt6.QtGui import QPen, QColor
 class Idea(QGraphicsItem):
     '''Класс идеи'''
 
-    def __init__(self, text: str, scene, parentIdea=None):
+    def __init__(self, text: str, scene, treeRow: int, parentIdea=None):
         super().__init__()
         self.text = text
         self.ideaMapScene = scene
         self.parentIdea = parentIdea
         self.childs = []
+        self.treeRow = treeRow
 
     def boundingRect(self) -> QtCore.QRectF:
         '''Переопределенный метод определения размеров ограничивающего прямоугольника'''
@@ -45,9 +46,19 @@ class IdeaMap(QGraphicsScene):
     def __init__(self, projectWindow):
         self.projectWindow = projectWindow
         super().__init__(self.projectWindow)
-        self.rootIdea = Idea("Первая мысль", self)
+        # self.treeView = projectWindow.treeView
+        self.setViewportSizeToScene()
+        self.rootIdea = Idea("Первая мысль", self, 0)
         self.addItem(self.rootIdea)
         self.setIdeaPos(self.rootIdea)
+
+    # Этот метод нужен для того, чтобы правильно рассчитывать высоту, 
+    # отведенную каждой дочерней идее, т.к. лэйаут меняет реальные размеры сцены
+    def setViewportSizeToScene(self):
+        '''Метод для получения размера viewport после его изменения лэйаутом'''
+        viewport = self.projectWindow.treeView.viewport()
+        vp_size = viewport.size()
+        self.setSceneRect(0, 0, vp_size.width(), vp_size.height())
 
     def connectIdeas(self, parentIdea: Idea, childIdea: Idea) -> bool:
         '''Метод для соединения двух идей линией'''
@@ -70,26 +81,43 @@ class IdeaMap(QGraphicsScene):
 
     def addIdea(self, text: str, parentIdea: Idea) -> None:
         '''Метод добавления идеи в карту мыслей'''
-        childIdea = Idea(text, self, parentIdea)
+        childIdea = Idea(text, self, parentIdea.treeRow + 1, parentIdea)
         parentIdea.addChild(childIdea)
         self.addItem(childIdea)
         self.setIdeaPos(childIdea)
         self.connectIdeas(parentIdea, childIdea)
 
+    def getAllocatedIdeaHeight(self, idea: Idea):
+        '''Метод для получения высоты, отведенной одной идее'''
+        if not idea.parentIdea:  # если идея корневая
+            return self.height()
+
+        parentHeight = self.getAllocatedIdeaHeight(idea.parentIdea)
+        return parentHeight / len(idea.parentIdea.childs)
+
     def setIdeaPos(self, idea: Idea):
         '''Метод для позиционирования идеи на сцене'''
+        scene_height = self.height()
+
         if idea.parentIdea:  # если идея не корневая
-            # если эта идея не первый ребенок
-            if idea.parentIdea.childs[0] != idea:
-                ideaIndex = idea.parentIdea.childs.index(idea)
-                x = idea.parentIdea.childs[ideaIndex - 1].pos().x()
-                y = idea.parentIdea.childs[ideaIndex - 1].pos().y(
-                ) + idea.parentIdea.childs[ideaIndex - 1].boundingRect().height() + 20
+            childIndex = idea.parentIdea.childs.index(idea)
+
+            x = idea.parentIdea.pos().x() + idea.parentIdea.boundingRect().width() + 20
+
+            if childIndex != 0:  # если ребенок не первый
+                if idea.parentIdea.parentIdea:
+                    parentHeight = self.getAllocatedIdeaHeight(idea.parentIdea)
+                    parentY = idea.parentIdea.pos().y()
+                else:
+                    parentHeight = scene_height
+                    parentY = 0
+
+                y = parentY + (childIndex * (parentHeight /
+                               len(idea.parentIdea.childs)))
             else:
-                x = idea.parentIdea.pos().x() + idea.parentIdea.boundingRect().width() + 20
                 y = idea.parentIdea.pos().y()
         else:  # если корневая
-            x = -180
-            y = idea.boundingRect().height()
+            x = 0
+            y = scene_height / 2
 
         idea.setPos(x, y)
