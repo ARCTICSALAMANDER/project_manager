@@ -4,6 +4,11 @@ from PyQt6.QtCore import QLineF, QPointF
 from PyQt6.QtGui import QPen, QColor
 
 
+class RootIdeaRemoval(ValueError):
+    '''Класс ошибки, которая возникает, когда пользователь хочет удалить корневую идею'''
+    pass
+
+
 class Line(QGraphicsLineItem):
     def __init__(self, line: QLineF, parentIdea, childIdea):
         super().__init__(line)
@@ -14,13 +19,13 @@ class Line(QGraphicsLineItem):
 class Idea(QGraphicsItem):
     '''Класс идеи'''
 
-    def __init__(self, text: str, scene, treeRow: int, parentIdea=None):
+    def __init__(self, scene, treeRow: int, text: str="", parentIdea=None):
         super().__init__()
         self.ideaMapScene = scene
         self.parentIdea = parentIdea
         self.childs = []
         self.treeRow = treeRow
-        
+
         self.textEditProxy = QGraphicsProxyWidget(self)
         self.textEdit = QLineEdit(text)
         self.textEdit.setStyleSheet('''
@@ -30,13 +35,13 @@ class Idea(QGraphicsItem):
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.textEditProxy.setWidget(self.textEdit)        
+        self.textEditProxy.setWidget(self.textEdit)
         # сигнал изменения текста для обновления размера
         self.textEdit.textChanged.connect(self.updateSize)
-        
+
         self.addButtonProxy = QGraphicsProxyWidget(self)
         self.deleteButtonProxy = QGraphicsProxyWidget(self)
-        
+
         self.addButton = QPushButton("+")
         self.addButton.setFixedSize(20, 20)
         self.addButton.setStyleSheet('''
@@ -46,8 +51,9 @@ class Idea(QGraphicsItem):
             font-weight: bold;
             font-size: 14px;
         ''')
+        self.addButton.clicked.connect(lambda: self.ideaMapScene.addIdea("", self))
         self.addButtonProxy.setWidget(self.addButton)
-        
+
         self.deleteButton = QPushButton("×")
         self.deleteButton = QPushButton("×")
         self.deleteButton.setFixedSize(20, 20)
@@ -58,13 +64,14 @@ class Idea(QGraphicsItem):
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.deleteButtonProxy.setWidget(self.deleteButton)    
+        self.deleteButton.pressed.connect(lambda: self.ideaMapScene.deleteIdea(self))
+        self.deleteButtonProxy.setWidget(self.deleteButton)
 
         self.parentLine: Line | None = None
         self.childLines = []
 
         self.textEdit.textChanged.connect(self.updateAllLinesPos)
-        
+
     def updateSize(self):
         '''Обновляем размер при изменении текста'''
         self.prepareGeometryChange()
@@ -73,42 +80,45 @@ class Idea(QGraphicsItem):
     def boundingRect(self) -> QtCore.QRectF:
         '''Переопределенный метод определения размеров ограничивающего прямоугольника'''
         font_metrics = QtGui.QFontMetrics(QtGui.QFont())
-        
+
         # Используем текущий текст из QLineEdit для расчета ширины
         current_text = self.textEdit.text()
-        text_width = font_metrics.horizontalAdvance(current_text) + 40  # +20px padding с каждой стороны
+        text_width = font_metrics.horizontalAdvance(
+            current_text) + 40  # +20px padding с каждой стороны
         if text_width < 100:  # минимальная ширина
             text_width = 100
-            
+
         text_height = font_metrics.height() + 20  # +10px padding сверху и снизу
-        
+
         total_height = text_height + 30  # 30px дополнительно для кнопок
-        
+
         return QtCore.QRectF(0, 0, text_width, total_height)
 
     def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionGraphicsItem, widget: QtWidgets.QWidget) -> None:
         '''Переопределенный метод отрисовки класса Idea'''
         rect = self.boundingRect()
-        
+
         # основной прямоугольник только для текстовой части
         text_rect = QtCore.QRectF(0, 0, rect.width(), rect.height() - 30)
         painter.setPen(QPen(QColor(255, 255, 255)))
         painter.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         painter.drawRect(text_rect)
-        
+
         self.textEditProxy.setPos(0, 0)
-        self.textEdit.setFixedSize(int(text_rect.width()), int(text_rect.height()))
+        self.textEdit.setFixedSize(
+            int(text_rect.width()), int(text_rect.height()))
 
         # Ставим кнопки
         button_y = rect.height() - 35
-        self.addButtonProxy.setPos(rect.width() / 2 - 25, button_y) # числа 25 и 5 в формуле подогнаны по пикселям
+        # числа 25 и 5 в формуле подогнаны по пикселям
+        self.addButtonProxy.setPos(rect.width() / 2 - 25, button_y)
         self.deleteButtonProxy.setPos(rect.width() / 2 + 5, button_y)
 
     def updateAllLinesPos(self):
         '''Метод для обновления позиций всех линий, соединенных с этой идеей'''
-        if self.parentLine: # если вдруг изменили текст корневой идеи
+        if self.parentLine:  # если вдруг изменили текст корневой идеи
             self.updateLinePos(self.parentLine)
-        
+
         for i in range(len(self.childLines)):
             self.updateLinePos(self.childLines[i])
 
@@ -116,8 +126,10 @@ class Idea(QGraphicsItem):
         '''метод для повторной отрисовки линий между идеями после изменений текста в них'''
         parentRect = line.parentIdea.boundingRect()
         childRect = line.childIdea.boundingRect()
-        point1 = QPointF(line.parentIdea.pos().x() + parentRect.width(), line.parentIdea.pos().y() + parentRect.height() - 50)
-        point2 = QPointF(line.childIdea.pos().x(), line.childIdea.pos().y() + childRect.height() / 2 - 15)
+        point1 = QPointF(line.parentIdea.pos().x() + parentRect.width(),
+                         line.parentIdea.pos().y() + parentRect.height() - 50)
+        point2 = QPointF(line.childIdea.pos().x(),
+                         line.childIdea.pos().y() + childRect.height() / 2 - 15)
         new_line = QLineF(point1, point2)
         line.setLine(new_line)
 
@@ -146,10 +158,10 @@ class IdeaMap(QGraphicsScene):
         self.projectWindow = projectWindow
         super().__init__(self.projectWindow)
         self.setViewportSizeToScene()
-        self.rootIdea = Idea("Первая мысль", self, 0)
+        self.rootIdea = Idea(self, 0, text="Первая мысль")
         self.addItem(self.rootIdea)
         self.setIdeaPos(self.rootIdea)
-        self.lines = [] # список линий между идеями
+        self.lines = []  # список линий между идеями
 
     def setViewportSizeToScene(self):
         '''Метод для получения размера viewport после его изменения лэйаутом'''
@@ -172,7 +184,7 @@ class IdeaMap(QGraphicsScene):
             pen.setWidth(1)
             line.setPen(pen)
             self.addItem(line)
-            
+
             parentIdea.childLines.append(line)
             childIdea.parentLine = line
 
@@ -182,11 +194,24 @@ class IdeaMap(QGraphicsScene):
 
     def addIdea(self, text: str, parentIdea: Idea) -> None:
         '''Метод добавления идеи в карту мыслей'''
-        childIdea = Idea(text, self, parentIdea.treeRow + 1, parentIdea)
+        childIdea = Idea(self, parentIdea.treeRow + 1, text, parentIdea)
         parentIdea.addChild(childIdea)
         self.addItem(childIdea)
         self.setIdeaPos(childIdea)
         self.connectIdeas(parentIdea, childIdea)
+
+    def deleteIdea(self, idea: Idea):
+        '''Метод для удаления идеи'''
+        if idea.parentIdea:
+            for i in range(len(idea.childs)):
+                self.deleteIdea(idea.childs[i])
+
+            ideaIndex = idea.parentIdea.childs.index(idea)
+            helper = idea.parentIdea.childs.pop(ideaIndex)
+            self.removeItem(idea.parentLine)
+            self.removeItem(idea)
+        else:
+            raise RootIdeaRemoval("You cannot delete the root idea")
 
     def getAllocatedIdeaHeight(self, idea: Idea):
         '''Метод для получения высоты, отведенной одной идее'''
