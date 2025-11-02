@@ -1,5 +1,6 @@
 import sys
 import string
+from datetime import datetime
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QGraphicsView
 from ConsoleController import Console
@@ -78,6 +79,15 @@ class ProjectWindow(QMainWindow):
         self.treeView.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         self.treeView.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
+        self.addTaskButton = QtWidgets.QPushButton("Добавить задачу", self)
+        self.addTaskButton.setStyleSheet('''
+            border: 1px solid white;
+            background-color: rgb(30, 30, 30);
+            border-radius: 3px;
+            padding: 2px;
+        ''')
+        self.addTaskButton.pressed.connect(self.addTask)
+
         self.listWidget = QtWidgets.QListWidget(parent=self.treeCheckBoxCont)
         self.listWidget.setObjectName("listWidget")
         self.listWidget.setStyleSheet('''
@@ -89,6 +99,7 @@ class ProjectWindow(QMainWindow):
         self.listWidget.setSpacing(2)
 
         self.treeCheckBoxCont.addWidget(self.treeView)
+        self.treeCheckBoxCont.addWidget(self.addTaskButton)
         self.treeCheckBoxCont.addWidget(self.listWidget)
 
         self.splitter = QtWidgets.QSplitter(parent=self.centralwidget)
@@ -149,33 +160,25 @@ class ProjectWindow(QMainWindow):
             # восстанавливаем передачу сигналов
             self.consoleInput.blockSignals(False)
 
-    def addTask(self, taskName: str):
+    def addTask(self, text: str="Новая задача", isDefault: bool=False):
         '''Добавление задачи в список задач'''
-        task = Task(taskName)
+        task = Task(self, text, isDefault)
         taskInList = QtWidgets.QListWidgetItem()
         taskInList.setSizeHint(task.sizeHint())
         self.listWidget.addItem(taskInList)
         self.listWidget.setItemWidget(taskInList, task)
 
-    def deleteTask(self, taskNumber: int) -> bool:
-        '''Удаление задачи из списка по номеру'''
-        helper = self.listWidget.takeItem(taskNumber - 1)
-        if helper == None:
-            return False
-        else:
-            return True
-
     def addDefaultTasks(self):
         '''Добавление стандартных задач в каждый проект'''
-        self.addTask("Написать ТЗ")
+        self.addTask("Написать ТЗ", True)
 
-        auto_task1 = Task("Создать Git-репозиторий для проекта")
+        auto_task1 = Task(self, "Создать Git-репозиторий для проекта", True)
         auto_task1_item = QtWidgets.QListWidgetItem()
         auto_task1_item.setSizeHint(auto_task1.sizeHint())
         self.listWidget.addItem(auto_task1_item)
         self.listWidget.setItemWidget(auto_task1_item, auto_task1)
 
-        auto_task2 = Task("Сделать первый коммит")
+        auto_task2 = Task(self, "Сделать первый коммит", True)
         auto_task2_item = QtWidgets.QListWidgetItem()
         auto_task2_item.setSizeHint(auto_task2.sizeHint())
         self.listWidget.addItem(auto_task2_item)
@@ -186,28 +189,65 @@ class ProjectWindow(QMainWindow):
 
 
 class Task(QtWidgets.QWidget):
-    def __init__(self, taskName: str):
+    def __init__(self, projectWindow: ProjectWindow, taskName: str="Новая задача", isDefault: bool=False):
         super().__init__()
-        self.taskName = taskName
-
         self.taskLayout = QtWidgets.QHBoxLayout()
+        self.projectWindow = projectWindow
+        
+        self.isDefault = isDefault
+        self.completeTime = None
 
-        self.checkbox = QtWidgets.QCheckBox(taskName)
+        self.taskName = QtWidgets.QLineEdit(taskName, self)
+        self.taskName.setFixedHeight(30)
+        self.taskName.setStyleSheet('''
+            background-color: rgb(83, 83, 83);
+            border: none;
+            border-radius: 0px;
+            margin: 0;
+            padding: 3px;
+        ''')
+
+        self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setFixedHeight(30)
         self.checkbox.setStyleSheet('''
             background-color: rgb(83, 83, 83);
+            border: none;
+            border-radius: 0px;
+            margin: 0;
+            padding: 3px;
         ''')
+        self.checkbox.stateChanged.connect(self.selectCompletingTime)
+
         self.taskLayout.addWidget(self.checkbox)
+        self.taskLayout.addWidget(self.taskName)
 
         self.addDeadlineBtn = QtWidgets.QPushButton("Добавить дедлайн")
         self.addDeadlineBtn.setFixedWidth(120)
         self.addDeadlineBtn.setFixedHeight(30)
         self.addDeadlineBtn.setStyleSheet('''
             background-color: rgb(83, 83, 83);
+            border: 2px solid white;
+            border-radius: 0px;
+            padding: 3px;
         ''')
         self.taskLayout.addWidget(self.addDeadlineBtn)
+
+        self.deleteTaskButton = QtWidgets.QPushButton("x", self)
+        self.deleteTaskButton.setFixedHeight(30)
+        self.deleteTaskButton.setFixedWidth(30)
+        self.deleteTaskButton.setStyleSheet('''
+            background-color: #c82333;
+            color: white;
+            font-size: 20px;
+        ''')
+        self.deleteTaskButton.pressed.connect(self.deleteThisTask)
+        self.taskLayout.addWidget(self.deleteTaskButton)
+
+        self.taskLayout.setSpacing(0)
+        self.taskLayout.setContentsMargins(3, 3, 3, 3)
         self.setLayout(self.taskLayout)
 
+        self.deadline = None
         self.calendarWidget = QtWidgets.QCalendarWidget()
         self.setDateBtn = QtWidgets.QPushButton("Выбрать эту дату")
         self.setDateBtn.clicked.connect(self.selectDeadline)
@@ -224,6 +264,19 @@ class Task(QtWidgets.QWidget):
         self.dateWidget.hide()
         self.addDeadlineBtn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
         self.addDeadlineBtn.blockSignals(True)
+
+    def selectCompletingTime(self):
+        '''Метод для установки времени, когда задача была выполнена'''
+        if self.checkbox.isChecked():
+            self.completeTime = datetime.now()
+
+    def deleteThisTask(self):
+        '''Метод удаления задачи из списка задач'''
+        if not self.isDefault:
+            for index in range(self.projectWindow.listWidget.count()): # listWidget.count() - количество всех item у виджета
+                item = self.projectWindow.listWidget.item(index)
+                if self.projectWindow.listWidget.itemWidget(item) == self:
+                    self.projectWindow.listWidget.takeItem(index)
 
 
 if __name__ == '__main__':

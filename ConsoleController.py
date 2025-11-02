@@ -1,13 +1,14 @@
 import subprocess
 import os
 import shutil
+from datetime import datetime
 
 
 class Console():
     def __init__(self, projectWindow):
         self.projectWindow = projectWindow
-        self.commands = ['help', 'add_task', 'delete_task']
-        self.helpMessage = "PROJECT'S CONSOLE COMMANDS\nadd_task <task name>: adds a task to the task list\ndelete_task <task number>: deletes a task from the task list. Tasks' numeration starts from the top"
+        self.commands = ['help', 'bind_folder', 'show_statistics']
+        self.helpMessage = "PROJECT'S CONSOLE COMMANDS\nbind_folder <path to project's folder>: binds a folder to the project. After you bind a folder, this app will check for existing repository and the first commit.\nshow_statistics: shows your activity stats including "
         self.gitManager = GitManager(projectWindow)
 
     def commandExecuter(self):
@@ -17,33 +18,12 @@ class Console():
             ' ') != -1 else len(command)
         if command[:space_index] == 'help':
             self.projectWindow.consoleOutput.setPlainText(self.helpMessage)
-        elif command[:space_index] == 'add_task':
-            taskName = command[space_index + 1:]
-            self.projectWindow.addTask(taskName)
-            self.projectWindow.consoleOutput.setPlainText(
-                f"Successfully added '{taskName}' to the task list")
-        elif command[:space_index] == 'delete_task':
-            try:
-                taskNumber = int(command[space_index + 1:])
-                if taskNumber < 1:
-                    self.projectWindow.consoleOutput.setPlainText(
-                        f"INVALID ARGUMENT ERROR: \ntask's number cannot be less than 1")
-                    return
-            except ValueError:
-                self.projectWindow.consoleOutput.setPlainText(
-                    f"INVALID ARGUMENT ERROR: \n{taskNumber} cannot be a argument. Please, check existence of a task with this number and if this argument is a integer")
-                return
-            itemCheck = self.projectWindow.deleteTask(int(taskNumber))
-            if not itemCheck:
-                self.projectWindow.consoleOutput.setPlainText(
-                    f"INVALID ARGUMENT ERROR:\nThere is no task with number {taskNumber}")
-            else:
-                self.projectWindow.consoleOutput.setPlainText(
-                    f"Successfully deleted task №{taskNumber} from the task list")
         elif command[:space_index] == 'bind_folder':
             status = self.bindFolder(command, space_index)
             if not status:
                 return
+        elif command[:space_index] == 'show_statistics':
+            self.show_statistics()
         else:
             self.projectWindow.consoleOutput.setPlainText(
                 f"SYNTAX ERROR:\nthere is no command '{command[:space_index]}'")
@@ -75,6 +55,53 @@ class Console():
         item = self.projectWindow.listWidget.item(taskIndex)
         self.projectWindow.listWidget.itemWidget(
             item).checkbox.setChecked(True)
+
+    def show_statistics(self):
+        '''Метод для показа статистики по проекту'''
+        res = "THIS PROJECT STATS:\n"
+        doneCount = 0
+        notDoneCount = 0
+        current_date = datetime.now().date()
+        lastCompletedTask = None
+        closestDeadline = None
+    
+        for i in range(self.projectWindow.listWidget.count()):
+            item_widget = self.projectWindow.listWidget.itemWidget(self.projectWindow.listWidget.item(i))
+            
+            if item_widget.checkbox.isChecked():
+                doneCount += 1
+            else:
+                notDoneCount += 1
+
+            if item_widget.completeTime:
+                if lastCompletedTask is None or item_widget.completeTime > lastCompletedTask.completeTime:
+                    lastCompletedTask = item_widget
+
+            if item_widget.deadline and not item_widget.checkbox.isChecked():
+                # Преобразуем QDate в datetime.date для сравнения
+                deadline_date = item_widget.deadline.toPyDate()
+                
+                # Проверяем, что дедлайн еще не прошел
+                if deadline_date >= current_date:
+                    if closestDeadline is None or deadline_date < closestDeadline.toPyDate():
+                        closestDeadline = item_widget.deadline
+
+        total_tasks = self.projectWindow.listWidget.count()
+        completion_percentage = (doneCount / total_tasks * 100) if total_tasks > 0 else 0
+        
+        res += f"{doneCount} tasks done, {notDoneCount} tasks left ({completion_percentage:.1f}% complete)\n"
+        
+        if lastCompletedTask:
+            res += f"last completed task: {lastCompletedTask.taskName.text()}\n"
+        else:
+            res += "last completed task: none\n"
+
+        if closestDeadline:
+            res += f"closest deadline: {closestDeadline.toString('dd.MM.yy')}\n"
+        else:
+            res += "closest deadline: none\n"
+        
+        self.projectWindow.consoleOutput.setPlainText(res)
 
 
 class GitManager:
