@@ -11,10 +11,10 @@ class ProjectWindow(QMainWindow):
     def __init__(self, projectName: str):
         super().__init__()
         self.projectName = projectName
-        self.setupUi(self)
-        self.addDefaultTasks()
         self.console = Console(self)
         self.projectFolder = ""
+        self.setupUi(self)
+        self.addDefaultTasks()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
@@ -120,6 +120,11 @@ class ProjectWindow(QMainWindow):
         self.projectNameLabel = QtWidgets.QLabel(parent=self.splitter)
         self.projectNameLabel.setObjectName("projectName")
         self.projectNameLabel.setText(self.projectName)
+
+        self.folderPathLabel = QtWidgets.QTextBrowser(parent=self.splitter)
+        self.folderPathLabel.setObjectName("folderPath")
+        self.folderPathLabel.setMaximumHeight(30)        
+        self.folderPathLabel.setPlainText(f"Текущая папка проекта: {self.projectFolder if self.projectFolder else "еще не привязана"}")
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)

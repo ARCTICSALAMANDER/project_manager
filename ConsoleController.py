@@ -37,24 +37,42 @@ class Console():
                 f"ERROR:\nGit not found. Check if it had been added to PATH")
 
         status = self.gitManager.bindFolder(projectFolder)
+        folderText = ""
         if status:
             self.projectWindow.consoleOutput.setPlainText(
                 "Folder binded successfully!")
+            
+            projectFolder = projectFolder.strip('"').strip("'")
+            slashIndex = projectFolder.rfind('\\') # не знаю, какой конкретно слэш будет в тексте пути, поэтому пробую оба варианта
+            if slashIndex == -1:
+                slashIndex = projectFolder.rfind('/')
+
+            folderText = './' + projectFolder[slashIndex + 1:]
+            self.projectWindow.folderPathLabel.setPlainText(f"Текущая папка проекта: {folderText}")
+
             if self.gitManager.isRepos:
-                self.checkDefaultTask(1)
+                self.checkDefaultTask(1, True)
                 # проверяем, есть ли коммиты и отмечаем соответствующий чекбокс
                 if self.gitManager.firstCommitCheck():
-                    self.checkDefaultTask(2)
+                    self.checkDefaultTask(2, True)
+                else:
+                    self.checkDefaultTask(2, False)
+            else:
+                self.checkDefaultTask(1, False)
 
             return True
         else:
             return False
 
-    def checkDefaultTask(self, taskIndex):
+    def checkDefaultTask(self, taskIndex, check: bool=True):
         '''Метод для отметки чекбоксов стандартных задач'''
         item = self.projectWindow.listWidget.item(taskIndex)
-        self.projectWindow.listWidget.itemWidget(
-            item).checkbox.setChecked(True)
+        if check:
+            self.projectWindow.listWidget.itemWidget(
+                item).checkbox.setChecked(True)
+        else:
+            self.projectWindow.listWidget.itemWidget(
+                item).checkbox.setChecked(False)
 
     def show_statistics(self):
         '''Метод для показа статистики по проекту'''
@@ -132,6 +150,9 @@ class GitManager:
         if projectFolder[-1] == '"':
             projectFolder = projectFolder[:-1]
 
+        self.isRepos = False
+        self.hasCommits = False
+
         status = self.reposCheck(projectFolder)
         if status:
             self.projectFolder = projectFolder
@@ -142,6 +163,8 @@ class GitManager:
     def reposCheck(self, projectFolder) -> bool:
         '''Проверка на наличие репозитория в привязанной папке. Вернет True если существует папка и укажет self.isRepos = True,
         если есть репозиторий в ней, и False, если не существует папка'''
+        self.isRepos = False
+
         status = subprocess.run(
             [self.gitPath, '-C', projectFolder, 'status'], capture_output=True, text=True)
         if status.returncode != 0:  # status будет равен 0 в том случае, если папка существует и в ней есть репозиторий
@@ -166,7 +189,8 @@ class GitManager:
         if self.projectFolder:
             commitStatus = subprocess.run(
                 [self.gitPath, '-C', self.projectFolder, 'rev-list', '-n', '1', '--all'], capture_output=True, text=True)
-            if commitStatus:
+            
+            if commitStatus.returncode == 0 and commitStatus.stdout.strip(): # команда выполнилась успешно и есть вывод
                 return True
             else:
                 return False
