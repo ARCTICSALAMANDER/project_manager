@@ -8,13 +8,15 @@ from Idea_map import Idea, IdeaMap
 
 
 class ProjectWindow(QMainWindow):
-    def __init__(self, projectName: str):
+    def __init__(self, projectName: str, mainWindow):
         super().__init__()
         self.projectName = projectName
+        self.mainWindow = mainWindow
         self.console = Console(self)
         self.projectFolder = ""
         self.setupUi(self)
         self.addDefaultTasks()
+        self.completePercent = 0
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
@@ -116,6 +118,7 @@ class ProjectWindow(QMainWindow):
             border-radius: 3px;
             padding: 2px;
         ''')
+        self.backButton.pressed.connect(self.goBack)
 
         self.projectNameLabel = QtWidgets.QLabel(parent=self.splitter)
         self.projectNameLabel.setObjectName("projectName")
@@ -144,6 +147,21 @@ class ProjectWindow(QMainWindow):
         self.backButton.setText(_translate("MainWindow", "<- Назад"))
         self.projectNameLabel.setText(
             _translate("MainWindow", self.projectName))
+        
+    def goBack(self):
+        self.hide()
+        status = self.countCompletePercent()
+        for i in range(self.mainWindow.listWidget.count()):
+            itemWidget = self.mainWindow.listWidget.itemWidget(self.mainWindow.listWidget.item(i))
+            if itemWidget.projectLabel.text() == self.projectName:
+                if status == 0.0:
+                    itemWidget.projectStatus.setPlainText("Запланирован")
+                elif status < 100.0:
+                    itemWidget.projectStatus.setPlainText("Начат")
+                else:
+                    itemWidget.projectStatus.setPlainText("Закончен")
+
+        self.mainWindow.show()
 
     def restore_console_prefix(self):
         '''Эта функция восстанавливает префикс "> " в вводе консоли, если
@@ -191,6 +209,17 @@ class ProjectWindow(QMainWindow):
 
     def executeCommand(self):
         self.console.commandExecuter()
+
+    def countCompletePercent(self) -> float:
+        '''Метод для подсчета процента выполненных задач'''
+        doneCount = 0
+        for i in range(self.listWidget.count()):
+            itemWidget = self.listWidget.itemWidget(self.listWidget.item(i))
+            if isinstance(itemWidget, Task):  # Проверяем тип
+                if itemWidget.checkbox.isChecked():
+                    doneCount += 1
+
+        return doneCount / self.listWidget.count() * 100
 
 
 class Task(QtWidgets.QWidget):
@@ -284,8 +313,8 @@ class Task(QtWidgets.QWidget):
                     self.projectWindow.listWidget.takeItem(index)
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = ProjectWindow("New Project")
-    ex.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     ex = ProjectWindow("New Project")
+#     ex.show()
+#     sys.exit(app.exec())
