@@ -8,6 +8,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.projects = {}
+        self.projectsNames = []
         self.setupUi(self)
 
     def setupUi(self, MainWindow):
@@ -61,11 +62,15 @@ class MainWindow(QMainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.addProjectBtn.setText(_translate("MainWindow", "Добавить проект"))
 
+    def setProjectName(self):
+        '''Метод для выбора названия проекта'''
+
     def addProject(self):
         '''Метод добавления проекта'''
         newProjectWindow = ProjectWindow("Новый проект", self)
         newProjectLabel = ProjectLabel(newProjectWindow, self)
         newProjectLabel.initUi()
+        newProjectWindow.projectNameLabel.setText(newProjectLabel.projectName)
         self.projects[newProjectLabel] = newProjectWindow
         newProjectItem = QtWidgets.QListWidgetItem()
         newProjectItem.setSizeHint(newProjectLabel.sizeHint())
@@ -78,17 +83,42 @@ class ProjectLabel(QtWidgets.QWidget):
         super().__init__()
         self.project = project
         self.mainWindow = mainWindow
-        
+        self.projectName = ""
+
+        self.nameSelector = NameSelector(self, self.mainWindow)
+        if self.nameSelector.exec() == QtWidgets.QDialog.DialogCode.Rejected:
+            # считает максимальную цифру, встречающуюся в безымянных проектах
+            # нужно на случай, если например были безымянные проекты 1-6 
+            # и какой-то из них удалили
+            max_num = 0
+            for name in self.mainWindow.projectsNames:
+                if name == "Безымянный проект":
+                    max_num = max(max_num, 1)
+                elif name.startswith("Безымянный проект "):
+                    try:
+                        num = int(name.split()[-1])
+                        max_num = max(max_num, num)
+                    except ValueError:
+                        pass
+            
+            if max_num == 0:
+                name = "Безымянный проект"
+            else:
+                name = f"Безымянный проект {max_num + 1}"
+            
+            self.mainWindow.projectsNames.append(name)
+            self.projectName = name
+
     def initUi(self):
         self.projectLayout = QtWidgets.QHBoxLayout()
-        
-        self.projectLabel = QtWidgets.QLineEdit(self.project.projectName, self)
-        self.projectLabel.setStyleSheet('''
+
+        self.projectNameLabel = QtWidgets.QLabel(self.projectName, self)
+        self.projectNameLabel.setStyleSheet('''
             color: white;
             font-size: 16px;
         ''')
-        self.projectLabel.setFixedHeight(30)
-        self.projectLayout.addWidget(self.projectLabel)
+        self.projectNameLabel.setFixedHeight(30)
+        self.projectLayout.addWidget(self.projectNameLabel)
 
         self.projectStatus = QtWidgets.QTextBrowser(parent=self)
         self.getProjectStatus()
@@ -140,13 +170,65 @@ class ProjectLabel(QtWidgets.QWidget):
         projectIndex = 0
 
         for index, label in enumerate(self.mainWindow.projects.keys()):
-            if self.mainWindow.projects[label] == self.project:
+            item = self.mainWindow.listWidget.itemWidget(
+                self.mainWindow.listWidget.item(index))
+            if isinstance(item, ProjectLabel) and item.projectNameLabel.text() == self.projectNameLabel.text():
                 projectIndex = index
                 break
 
         self.mainWindow.listWidget.takeItem(projectIndex)
         self.mainWindow.projects.pop(self)
+        self.mainWindow.projectsNames.pop(projectIndex)
         self.project.close()
+
+
+class NameSelector(QtWidgets.QDialog):
+    '''Класс для выбора названия проекта.'''
+
+    def __init__(self, projectLabel: ProjectLabel, mainWindow: MainWindow):
+        super().__init__()
+        self.projectLabel = projectLabel
+        self.mainWindow = mainWindow
+        self.initUi()
+
+    def initUi(self):
+        self.setFixedSize(300, 150)
+        self.setWindowTitle("Выберите название для проекта")
+
+        self.selectorLayout = QtWidgets.QVBoxLayout(self)
+
+        self.label = QtWidgets.QLabel("Как назвать новый проект?", self)
+        self.label.setFixedHeight(30)
+        self.selectorLayout.addWidget(self.label)
+
+        self.nameSetter = QtWidgets.QLineEdit(self)
+        self.nameSetter.setFixedHeight(30)
+        self.selectorLayout.addWidget(self.nameSetter)
+
+        self.statusLabel = QtWidgets.QLabel("", self)
+        self.statusLabel.setFixedHeight(30)
+        self.selectorLayout.addWidget(self.statusLabel)
+
+        self.selectNameBtn = QtWidgets.QPushButton("Готово", self)
+        self.selectNameBtn.setFixedHeight(30)
+        self.selectNameBtn.setFixedWidth(80)
+        self.selectNameBtn.pressed.connect(self.checkName)
+        self.selectorLayout.addWidget(self.selectNameBtn)
+
+    def checkName(self):
+        '''Метод для проверки валидности имени проекта'''
+        name = self.nameSetter.text()
+        if name in self.mainWindow.projectsNames:
+            self.statusLabel.setText("Проект с таким именем уже есть")
+        elif name == '' or name.count(' ') == len(name):
+            self.statusLabel.setText("Название не может быть пустой строкой")
+        elif name == "Безымянный проект" or name.startswith("Безымянный проект "):
+            self.statusLabel.setText(
+                "Это имя зарезервировано логикой приложения")        
+        else:
+            self.mainWindow.projectsNames.append(name)
+            self.projectLabel.projectName = name
+            self.accept()
 
 
 if __name__ == '__main__':

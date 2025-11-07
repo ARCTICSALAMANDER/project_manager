@@ -3,12 +3,11 @@ import os
 import shutil
 from datetime import datetime
 
-
 class Console():
     def __init__(self, projectWindow):
         self.projectWindow = projectWindow
         self.commands = ['help', 'bind_folder', 'show_statistics']
-        self.helpMessage = "PROJECT'S CONSOLE COMMANDS\nbind_folder <path to project's folder>: binds a folder to the project. After you bind a folder, this app will check for existing repository and the first commit.\nshow_statistics: shows your activity stats including "
+        self.helpMessage = "PROJECT'S CONSOLE COMMANDS\nbind_folder <path to project's folder>: binds a folder to the project. After you bind a folder, this app will check for existing repository and the first commit.\nshow_statistics: shows your activity stats including last completed task, closest deadline and completion percent."
         self.gitManager = GitManager(projectWindow)
 
     def commandExecuter(self):
@@ -120,7 +119,6 @@ class Console():
             res += "closest deadline: none\n"
         
         self.projectWindow.consoleOutput.setPlainText(res)
-
 
 class GitManager:
     '''Управляет операциями с Git'''

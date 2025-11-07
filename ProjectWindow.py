@@ -61,7 +61,7 @@ class ProjectWindow(QMainWindow):
         self.treeCheckBoxCont.setGeometry(QtCore.QRect(20, 40, 491, 511))
         self.treeCheckBoxCont.setOrientation(QtCore.Qt.Orientation.Vertical)
         self.treeCheckBoxCont.setObjectName("treeCheckBoxCont")
-        
+
         self.treeView = QGraphicsView(parent=self.treeCheckBoxCont)
         self.treeView.setObjectName("treeView")
         self.treeView.setStyleSheet('''
@@ -74,8 +74,10 @@ class ProjectWindow(QMainWindow):
         self.ideaMap.setSceneRect(10, 40, 400, 150)
         self.treeView.setScene(self.ideaMap)
         # разрешаем скролл
-        self.treeView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.treeView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.treeView.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.treeView.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         # разрешаем перетаскивать курсором
         self.treeView.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
@@ -126,8 +128,9 @@ class ProjectWindow(QMainWindow):
 
         self.folderPathLabel = QtWidgets.QTextBrowser(parent=self.splitter)
         self.folderPathLabel.setObjectName("folderPath")
-        self.folderPathLabel.setMaximumHeight(30)        
-        self.folderPathLabel.setPlainText(f"Текущая папка проекта: {self.projectFolder if self.projectFolder else "еще не привязана"}")
+        self.folderPathLabel.setMaximumHeight(30)
+        self.folderPathLabel.setPlainText(
+            f"Текущая папка проекта: {self.projectFolder if self.projectFolder else "еще не привязана"}")
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
@@ -147,13 +150,14 @@ class ProjectWindow(QMainWindow):
         self.backButton.setText(_translate("MainWindow", "<- Назад"))
         self.projectNameLabel.setText(
             _translate("MainWindow", self.projectName))
-        
+
     def goBack(self):
         self.hide()
         status = self.countCompletePercent()
         for i in range(self.mainWindow.listWidget.count()):
-            itemWidget = self.mainWindow.listWidget.itemWidget(self.mainWindow.listWidget.item(i))
-            if itemWidget.projectLabel.text() == self.projectName:
+            itemWidget = self.mainWindow.listWidget.itemWidget(
+                self.mainWindow.listWidget.item(i))
+            if itemWidget.projectNameLabel.text() == self.projectName:
                 if status == 0.0:
                     itemWidget.projectStatus.setPlainText("Запланирован")
                 elif status < 100.0:
@@ -183,7 +187,7 @@ class ProjectWindow(QMainWindow):
             # восстанавливаем передачу сигналов
             self.consoleInput.blockSignals(False)
 
-    def addTask(self, text: str="Новая задача", isDefault: bool=False):
+    def addTask(self, text: str = "Новая задача", isDefault: bool = False):
         '''Добавление задачи в список задач'''
         task = Task(self, text, isDefault)
         taskInList = QtWidgets.QListWidgetItem()
@@ -223,11 +227,11 @@ class ProjectWindow(QMainWindow):
 
 
 class Task(QtWidgets.QWidget):
-    def __init__(self, projectWindow: ProjectWindow, taskName: str="Новая задача", isDefault: bool=False):
+    def __init__(self, projectWindow: ProjectWindow, taskName: str = "Новая задача", isDefault: bool = False):
         super().__init__()
         self.taskLayout = QtWidgets.QHBoxLayout()
         self.projectWindow = projectWindow
-        
+
         self.isDefault = isDefault
         self.completeTime = None
 
@@ -307,14 +311,8 @@ class Task(QtWidgets.QWidget):
     def deleteThisTask(self):
         '''Метод удаления задачи из списка задач'''
         if not self.isDefault:
-            for index in range(self.projectWindow.listWidget.count()): # listWidget.count() - количество всех item у виджета
+            # listWidget.count() - количество всех item у виджета
+            for index in range(self.projectWindow.listWidget.count()):
                 item = self.projectWindow.listWidget.item(index)
                 if self.projectWindow.listWidget.itemWidget(item) == self:
                     self.projectWindow.listWidget.takeItem(index)
-
-
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     ex = ProjectWindow("New Project")
-#     ex.show()
-#     sys.exit(app.exec())

@@ -19,7 +19,7 @@ class Line(QGraphicsLineItem):
 class Idea(QGraphicsItem):
     '''Класс идеи'''
 
-    def __init__(self, scene, treeRow: int, text: str="", parentIdea=None):
+    def __init__(self, scene, treeRow: int, text: str = "", parentIdea=None):
         super().__init__()
         self.ideaMapScene = scene
         self.parentIdea = parentIdea
@@ -51,7 +51,8 @@ class Idea(QGraphicsItem):
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.addButton.clicked.connect(lambda: self.ideaMapScene.addIdea("", self))
+        self.addButton.clicked.connect(
+            lambda: self.ideaMapScene.addIdea("", self))
         self.addButtonProxy.setWidget(self.addButton)
 
         self.deleteButton = QPushButton("×")
@@ -64,7 +65,8 @@ class Idea(QGraphicsItem):
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.deleteButton.pressed.connect(lambda: self.ideaMapScene.deleteIdea(self))
+        self.deleteButton.pressed.connect(
+            lambda: self.ideaMapScene.deleteIdea(self))
         self.deleteButtonProxy.setWidget(self.deleteButton)
 
         self.parentLine: Line | None = None
