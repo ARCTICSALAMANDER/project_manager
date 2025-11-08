@@ -150,6 +150,11 @@ class ProjectWindow(QMainWindow):
         self.backButton.setText(_translate("MainWindow", "<- Назад"))
         self.projectNameLabel.setText(
             _translate("MainWindow", self.projectName))
+        
+    def closeEvent(self, event):
+        '''Метод для сохранения информации после закрытия'''
+        self.mainWindow.DBManager.updateInfo()
+        super().closeEvent(event)
 
     def goBack(self):
         self.hide()

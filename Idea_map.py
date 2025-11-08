@@ -213,7 +213,8 @@ class IdeaMap(QGraphicsScene):
             self.removeItem(idea.parentLine)
             self.removeItem(idea)
         else:
-            raise RootIdeaRemoval("You cannot delete the root idea")
+            warningWindow = RootIdeaDeletionWarning()
+            warningWindow.exec()
 
     def getAllocatedIdeaHeight(self, idea: Idea):
         '''Метод для получения высоты, отведенной одной идее'''
@@ -249,3 +250,24 @@ class IdeaMap(QGraphicsScene):
             y = scene_height / 2
 
         idea.setPos(x, y)
+
+
+class RootIdeaDeletionWarning(QtWidgets.QDialog):
+    '''Класс виджета диалога, предупреждающего о попытке удалить корневую идею'''
+    def __init__(self):
+        super().__init__()
+        self.initUi()
+        self.okBtn.pressed.connect(self.accept)
+
+    def initUi(self):
+        self.selfLayout = QtWidgets.QVBoxLayout(self)
+        self.setFixedSize(300, 150)
+        self.setWindowTitle("Предупреждение")
+
+        self.label = QtWidgets.QLabel("Нельзя удалить корневую идею.", self)
+        self.label.setFixedHeight(30)
+        self.selfLayout.addWidget(self.label)
+
+        self.okBtn = QtWidgets.QPushButton("OK", self)
+        self.okBtn.setFixedSize(60, 30)
+        self.selfLayout.addWidget(self.okBtn)

@@ -48,6 +48,7 @@ class Console():
 
             folderText = './' + projectFolder[slashIndex + 1:]
             self.projectWindow.folderPathLabel.setPlainText(f"Текущая папка проекта: {folderText}")
+            self.projectWindow.projectFolder = projectFolder
 
             if self.gitManager.isRepos:
                 self.checkDefaultTask(1, True)

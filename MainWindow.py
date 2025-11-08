@@ -2,6 +2,7 @@ import sys
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication
 from ProjectWindow import ProjectWindow
+from SQLController import SqlController
 
 
 class MainWindow(QMainWindow):
@@ -10,6 +11,7 @@ class MainWindow(QMainWindow):
         self.projects = {}
         self.projectsNames = []
         self.setupUi(self)
+        self.DBManager = SqlController(self)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -61,6 +63,11 @@ class MainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.addProjectBtn.setText(_translate("MainWindow", "Добавить проект"))
+
+    def closeEvent(self, event):
+        '''Метод для сохранения информации после закрытия'''
+        self.DBManager.updateInfo()
+        super().closeEvent(event)
 
     def setProjectName(self):
         '''Метод для выбора названия проекта'''
@@ -235,4 +242,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
     ex.show()
+    ex.DBManager.updateInfo()
     sys.exit(app.exec())
