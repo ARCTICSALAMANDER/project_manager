@@ -261,8 +261,14 @@ class RootIdeaDeletionWarning(QtWidgets.QDialog):
 
     def initUi(self):
         self.selfLayout = QtWidgets.QVBoxLayout(self)
-        self.setFixedSize(300, 150)
+        self.setFixedSize(270, 350)
         self.setWindowTitle("Предупреждение")
+
+        self.imageLabel = QtWidgets.QLabel(self)
+        pixmap = QtGui.QPixmap("./restriction_image.jpg")
+        self.imageLabel.setPixmap(pixmap)
+        self.imageLabel.setFixedSize(300, 300)
+        self.selfLayout.addWidget(self.imageLabel)
 
         self.label = QtWidgets.QLabel("Нельзя удалить корневую идею.", self)
         self.label.setFixedHeight(30)
