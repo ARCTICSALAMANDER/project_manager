@@ -1,4 +1,3 @@
-import sys
 import string
 from datetime import datetime
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -150,7 +149,7 @@ class ProjectWindow(QMainWindow):
         self.backButton.setText(_translate("MainWindow", "<- Назад"))
         self.projectNameLabel.setText(
             _translate("MainWindow", self.projectName))
-        
+
     def closeEvent(self, event):
         '''Метод для сохранения информации после закрытия'''
         self.mainWindow.DBManager.updateInfo()
@@ -158,17 +157,12 @@ class ProjectWindow(QMainWindow):
 
     def goBack(self):
         self.hide()
-        status = self.countCompletePercent()
-        for i in range(self.mainWindow.listWidget.count()):
-            itemWidget = self.mainWindow.listWidget.itemWidget(
-                self.mainWindow.listWidget.item(i))
-            if itemWidget.projectNameLabel.text() == self.projectName:
-                if status == 0.0:
-                    itemWidget.projectStatus.setPlainText("Запланирован")
-                elif status < 100.0:
-                    itemWidget.projectStatus.setPlainText("Начат")
-                else:
-                    itemWidget.projectStatus.setPlainText("Закончен")
+        if self.mainWindow.__class__.__name__ == 'MainWindow':
+            for i in range(self.mainWindow.listWidget.count()):
+                projectLabel = self.mainWindow.listWidget.itemWidget(self.mainWindow.listWidget.item(i))
+                if projectLabel.projectName == self.projectName:
+                    projectLabel.getProjectStatus()
+                    break
 
         self.mainWindow.show()
 
@@ -224,7 +218,7 @@ class ProjectWindow(QMainWindow):
         doneCount = 0
         for i in range(self.listWidget.count()):
             itemWidget = self.listWidget.itemWidget(self.listWidget.item(i))
-            if isinstance(itemWidget, Task):  # Проверяем тип
+            if isinstance(itemWidget, Task):
                 if itemWidget.checkbox.isChecked():
                     doneCount += 1
 
@@ -312,6 +306,13 @@ class Task(QtWidgets.QWidget):
         '''Метод для установки времени, когда задача была выполнена'''
         if self.checkbox.isChecked():
             self.completeTime = datetime.now()
+        
+        for i in range(self.projectWindow.mainWindow.listWidget.count()):
+            item_widget = self.projectWindow.mainWindow.listWidget.itemWidget(
+                self.projectWindow.mainWindow.listWidget.item(i))
+            if item_widget.projectName == self.projectWindow.projectName:
+                item_widget.getProjectStatus()
+                break
 
     def deleteThisTask(self):
         '''Метод удаления задачи из списка задач'''

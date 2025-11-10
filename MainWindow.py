@@ -1,8 +1,8 @@
 import sys
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication
-from ProjectWindow import ProjectWindow
-from SQLController import DBManager
+from ProjectWindow import ProjectWindow, Task
+from SQLcontroller import DBManager
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +11,8 @@ class MainWindow(QMainWindow):
         self.projects = {}
         self.projectsNames = []
         self.setupUi(self)
-        self.DBManager = DBManager(self)
+        self.DBManager = DBManager(self, MainWindow, ProjectWindow, ProjectLabel, Task)
+        self.DBManager.loadInfo()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -86,35 +87,38 @@ class MainWindow(QMainWindow):
 
 
 class ProjectLabel(QtWidgets.QWidget):
-    def __init__(self, project: ProjectWindow, mainWindow: MainWindow):
+    def __init__(self, project: ProjectWindow, mainWindow: MainWindow, skipDialog=False):
         super().__init__()
         self.project = project
         self.mainWindow = mainWindow
         self.projectName = ""
 
-        self.nameSelector = NameSelector(self, self.mainWindow)
-        if self.nameSelector.exec() == QtWidgets.QDialog.DialogCode.Rejected:
-            # считает максимальную цифру, встречающуюся в безымянных проектах
-            # нужно на случай, если например были безымянные проекты 1-6 
-            # и какой-то из них удалили
-            max_num = 0
-            for name in self.mainWindow.projectsNames:
-                if name == "Безымянный проект":
-                    max_num = max(max_num, 1)
-                elif name.startswith("Безымянный проект "):
-                    try:
-                        num = int(name.split()[-1])
-                        max_num = max(max_num, num)
-                    except ValueError:
-                        pass
-            
-            if max_num == 0:
-                name = "Безымянный проект"
-            else:
-                name = f"Безымянный проект {max_num + 1}"
-            
-            self.mainWindow.projectsNames.append(name)
-            self.projectName = name
+        if not skipDialog:
+            self.nameSelector = NameSelector(self, self.mainWindow)
+            if self.nameSelector.exec() == QtWidgets.QDialog.DialogCode.Rejected:
+                # считает максимальную цифру, встречающуюся в безымянных проектах
+                # нужно на случай, если например были безымянные проекты 1-6
+                # и какой-то из них удалили
+                max_num = 0
+                for name in self.mainWindow.projectsNames:
+                    if name == "Безымянный проект":
+                        max_num = max(max_num, 1)
+                    elif name.startswith("Безымянный проект "):
+                        try:
+                            num = int(name.split()[-1])
+                            max_num = max(max_num, num)
+                        except ValueError:
+                            pass
+
+                if max_num == 0:
+                    name = "Безымянный проект"
+                else:
+                    name = f"Безымянный проект {max_num + 1}"
+
+                self.mainWindow.projectsNames.append(name)
+                self.projectName = name
+        else:
+            pass
 
     def initUi(self):
         self.projectLayout = QtWidgets.QHBoxLayout()
@@ -157,6 +161,12 @@ class ProjectLabel(QtWidgets.QWidget):
 
         self.setLayout(self.projectLayout)
 
+    def setProjectName(self, name: str):
+        '''Метод для установки имени проекта для загружаемых проектов'''
+        self.projectName = name
+        self.mainWindow.projectsNames.append(name)
+        self.initUi()
+
     def getProjectStatus(self):
         '''Метод для получения статуса проекта'''
         status = self.project.countCompletePercent()
@@ -183,7 +193,7 @@ class ProjectLabel(QtWidgets.QWidget):
                 projectIndex = index
                 break
 
-        self.mainWindow.listWidget.takeItem(projectIndex)
+        helper = self.mainWindow.listWidget.takeItem(projectIndex)
         self.mainWindow.projects.pop(self)
         self.mainWindow.projectsNames.pop(projectIndex)
         self.project.close()
@@ -231,7 +241,7 @@ class NameSelector(QtWidgets.QDialog):
             self.statusLabel.setText("Название не может быть пустой строкой")
         elif name == "Безымянный проект" or name.startswith("Безымянный проект "):
             self.statusLabel.setText(
-                "Это имя зарезервировано логикой приложения")        
+                "Это имя зарезервировано логикой приложения")
         else:
             self.mainWindow.projectsNames.append(name)
             self.projectLabel.projectName = name

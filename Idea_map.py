@@ -4,11 +4,6 @@ from PyQt6.QtCore import QLineF, QPointF
 from PyQt6.QtGui import QPen, QColor
 
 
-class RootIdeaRemoval(ValueError):
-    '''Класс ошибки, которая возникает, когда пользователь хочет удалить корневую идею'''
-    pass
-
-
 class Line(QGraphicsLineItem):
     def __init__(self, line: QLineF, parentIdea, childIdea):
         super().__init__(line)
@@ -254,6 +249,7 @@ class IdeaMap(QGraphicsScene):
 
 class RootIdeaDeletionWarning(QtWidgets.QDialog):
     '''Класс виджета диалога, предупреждающего о попытке удалить корневую идею'''
+
     def __init__(self):
         super().__init__()
         self.initUi()
