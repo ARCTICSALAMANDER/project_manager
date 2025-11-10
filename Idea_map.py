@@ -21,6 +21,13 @@ class Idea(QGraphicsItem):
         self.childs = []
         self.treeRow = treeRow
 
+        self.isDragging = False
+        self.oldPos = None
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
+
         self.textEditProxy = QGraphicsProxyWidget(self)
         self.textEdit = QLineEdit(text)
         self.textEdit.setStyleSheet('''
@@ -111,6 +118,19 @@ class Idea(QGraphicsItem):
         self.addButtonProxy.setPos(rect.width() / 2 - 25, button_y)
         self.deleteButtonProxy.setPos(rect.width() / 2 + 5, button_y)
 
+    def shape(self) -> QtGui.QPainterPath:
+        '''Определитель точной области для клика и перетаскивания'''
+        path = QtGui.QPainterPath()
+        path.addRect(self.boundingRect())
+        return path
+
+    def itemChange(self, change, value):
+        """Обрабатываем изменения позиции и обновляем линии"""
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            self.updateAllLinesPos()
+        
+        return super().itemChange(change, value)
+
     def updateAllLinesPos(self):
         '''Метод для обновления позиций всех линий, соединенных с этой идеей'''
         if self.parentLine:  # если вдруг изменили текст корневой идеи
@@ -159,6 +179,19 @@ class IdeaMap(QGraphicsScene):
         self.addItem(self.rootIdea)
         self.setIdeaPos(self.rootIdea)
         self.lines = []  # список линий между идеями
+
+        self.setItemIndexMethod(QGraphicsScene.ItemIndexMethod.NoIndex)
+
+    def updateAllLinesForIdea(self, idea: Idea):
+        '''Обновляем все линии, связанные с идеей'''
+        if idea.parentLine:
+            idea.updateLinePos(idea.parentLine)
+        
+        for child_line in idea.childLines:
+            idea.updateLinePos(child_line)
+        
+        for child in idea.childs:
+            self.updateAllLinesForIdea(child)
 
     def setViewportSizeToScene(self):
         '''Метод для получения размера viewport после его изменения лэйаутом'''
