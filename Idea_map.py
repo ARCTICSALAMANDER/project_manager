@@ -26,7 +26,8 @@ class Idea(QGraphicsItem):
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
+        self.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
 
         self.textEditProxy = QGraphicsProxyWidget(self)
         self.textEdit = QLineEdit(text)
@@ -128,7 +129,7 @@ class Idea(QGraphicsItem):
         """Обрабатываем изменения позиции и обновляем линии"""
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
             self.updateAllLinesPos()
-        
+
         return super().itemChange(change, value)
 
     def updateAllLinesPos(self):
@@ -186,10 +187,10 @@ class IdeaMap(QGraphicsScene):
         '''Обновляем все линии, связанные с идеей'''
         if idea.parentLine:
             idea.updateLinePos(idea.parentLine)
-        
+
         for child_line in idea.childLines:
             idea.updateLinePos(child_line)
-        
+
         for child in idea.childs:
             self.updateAllLinesForIdea(child)
 

@@ -2,6 +2,7 @@ import sys
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication
 from ProjectWindow import ProjectWindow, Task
+from Idea_map import Idea
 from SQLcontroller import DBManager
 
 
@@ -11,7 +12,8 @@ class MainWindow(QMainWindow):
         self.projects = {}
         self.projectsNames = []
         self.setupUi(self)
-        self.DBManager = DBManager(self, MainWindow, ProjectWindow, ProjectLabel, Task)
+        self.DBManager = DBManager(
+            self, MainWindow, ProjectWindow, ProjectLabel, Task, Idea)
         self.DBManager.loadInfo()
 
     def setupUi(self, MainWindow):

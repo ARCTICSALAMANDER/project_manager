@@ -159,7 +159,8 @@ class ProjectWindow(QMainWindow):
         self.hide()
         if self.mainWindow.__class__.__name__ == 'MainWindow':
             for i in range(self.mainWindow.listWidget.count()):
-                projectLabel = self.mainWindow.listWidget.itemWidget(self.mainWindow.listWidget.item(i))
+                projectLabel = self.mainWindow.listWidget.itemWidget(
+                    self.mainWindow.listWidget.item(i))
                 if projectLabel.projectName == self.projectName:
                     projectLabel.getProjectStatus()
                     break
@@ -306,7 +307,7 @@ class Task(QtWidgets.QWidget):
         '''Метод для установки времени, когда задача была выполнена'''
         if self.checkbox.isChecked():
             self.completeTime = datetime.now()
-        
+
         for i in range(self.projectWindow.mainWindow.listWidget.count()):
             item_widget = self.projectWindow.mainWindow.listWidget.itemWidget(
                 self.projectWindow.mainWindow.listWidget.item(i))
