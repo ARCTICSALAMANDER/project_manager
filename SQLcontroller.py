@@ -45,7 +45,7 @@ class DBManager:
 
                 if projectLabel.__class__.__name__ == 'ProjectLabel':
                     self.cur.execute(
-                        '''INSERT INTO ProjectsList (projectID, project, projectFolder) VALUES (?, ?, ?)''', 
+                        '''INSERT INTO ProjectsList (projectID, project, projectFolder) VALUES (?, ?, ?)''',
                         (i, projectLabel.projectName, projectLabel.project.projectFolder))
 
                     for j in range(projectLabel.project.listWidget.count()):
@@ -68,16 +68,16 @@ class DBManager:
         for i in range(self.mainWindow.listWidget.count()):
             projectLabel = self.mainWindow.listWidget.itemWidget(
                 self.mainWindow.listWidget.item(i))
-            
+
             projectId_result = self.cur.execute('''
                 SELECT projectID FROM ProjectsList
                 WHERE project = ?
             ''', (projectLabel.projectName,)).fetchone()
-            
+
             if projectId_result:
                 projectId = projectId_result[0]
                 rootIdea = projectLabel.project.ideaMap.rootIdea
-                
+
                 self.cur.execute('''
                     INSERT INTO ideas (parent_id, project_id, text, tree_row, position, x_pos, y_pos) VALUES (?, ?, ?, ?, ?, ?, ?)
                 ''', (0, projectId, rootIdea.textEdit.text(), rootIdea.treeRow, 0, rootIdea.pos().x(), rootIdea.pos().y()))
@@ -108,7 +108,8 @@ class DBManager:
 
         for project_name, project_id in projects:
             if hasattr(self.mainWindow, 'createProjectFromDB'):
-                newProjectLabel, newProjectWindow = self.mainWindow.createProjectFromDB(project_name)
+                newProjectLabel, newProjectWindow = self.mainWindow.createProjectFromDB(
+                    project_name)
                 self.loadTasks(project_id, newProjectLabel)
                 self.loadIdeas(newProjectWindow, project_id)
 
@@ -120,18 +121,20 @@ class DBManager:
 
         for task_text, is_done, deadline_str, is_default, task_id in tasks:
             projectLabel.project.addTask(task_text, is_default)
-            
+
             last_index = projectLabel.project.listWidget.count() - 1
             if last_index >= 0:
                 task = projectLabel.project.listWidget.itemWidget(
                     projectLabel.project.listWidget.item(last_index))
-                
+
                 if is_done:
                     task.checkbox.setChecked(True)
-                
+
                 if deadline_str:
-                    task.addDeadlineBtn.setText(f"До {deadline_str.replace('-', '.')}")
-                    task.deadline = QtCore.QDate(int(deadline_str[:2]), int(deadline_str[3:5]), int(deadline_str[6:]))
+                    task.addDeadlineBtn.setText(
+                        f"До {deadline_str.replace('-', '.')}")
+                    task.deadline = QtCore.QDate(int(deadline_str[:2]), int(
+                        deadline_str[3:5]), int(deadline_str[6:]))
                     task.addDeadlineBtn.blockSignals(True)
 
         projectLabel.getProjectStatus()
@@ -143,15 +146,15 @@ class DBManager:
                 '''SELECT text, x_pos, y_pos, id FROM ideas
                 WHERE project_id = ? AND parent_id = 0''', (projectId,)
             ).fetchone()
-            
+
             if root_data:
                 root_text, root_x, root_y, root_id = root_data
                 rootIdea = project.ideaMap.rootIdea
                 rootIdea.textEdit.setText(root_text)
                 rootIdea.setPos(root_x, root_y)
-                
+
                 self._loadChildIdeas(project, projectId, rootIdea, root_id)
-                
+
         except Exception as e:
             print(f"Error loading ideas: {e}")
 
@@ -164,9 +167,9 @@ class DBManager:
 
         for text, x_pos, y_pos, tree_row, idea_id in child_ideas:
             project.ideaMap.addIdea(text, parentIdea)
-            
+
             if parentIdea.childs:
                 child_idea = parentIdea.childs[-1]
                 child_idea.setPos(x_pos, y_pos)
-                
+
                 self._loadChildIdeas(project, projectId, child_idea, idea_id)

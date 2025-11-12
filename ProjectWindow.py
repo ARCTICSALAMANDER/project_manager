@@ -233,7 +233,7 @@ class ProjectWindow(QMainWindow):
                 if (task.deadline != None and task.deadline.isValid()) and not task.checkbox.isChecked():
                     # Преобразуем QDate в datetime.date для сравнения
                     deadline_date = task.deadline.toPyDate()
-                    
+
                     # Проверяем, что дедлайн еще не прошел
                     if deadline_date >= current_date:
                         if closestDeadline is None or deadline_date < closestDeadline.toPyDate():
@@ -337,14 +337,16 @@ class Task(QtWidgets.QWidget):
 
     def setProjectStatus(self):
         '''Метод для выставления статуса'''
-        self.projectWindow.mainWindow.updateProjectStatus(self.projectWindow.projectName)
+        self.projectWindow.mainWindow.updateProjectStatus(
+            self.projectWindow.projectName)
 
     def selectCompletingTime(self):
         '''Метод для установки времени, когда задача была выполнена'''
         if self.checkbox.isChecked():
             self.completeTime = datetime.now()
 
-        self.projectWindow.mainWindow.updateProjectStatus(self.projectWindow.projectName)
+        self.projectWindow.mainWindow.updateProjectStatus(
+            self.projectWindow.projectName)
 
     def deleteThisTask(self):
         '''Метод удаления задачи из списка задач'''

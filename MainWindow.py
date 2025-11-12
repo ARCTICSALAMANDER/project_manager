@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
         newProjectWindow = ProjectWindow(project_name, self, True)
         newProjectLabel = ProjectLabel(newProjectWindow, self, skipDialog=True)
         newProjectLabel.setProjectName(project_name)
-        
+
         newProjectItem = ProjectListItem(newProjectLabel)
         newProjectItem.setSizeHint(newProjectLabel.sizeHint())
         self.listWidget.addItem(newProjectItem)
@@ -110,9 +110,9 @@ class MainWindow(QMainWindow):
 
         self.projectsNames.append(project_name)
         self.projects[newProjectLabel] = newProjectWindow
-        
+
         return newProjectLabel, newProjectWindow
-        
+
     def sortProjectByClosestDeadline(self):
         '''Сортировка по ближайшему дедлайну'''
         self.listWidget.sortItems(QtCore.Qt.SortOrder.AscendingOrder)
@@ -290,7 +290,7 @@ class ProjectListItem(QtWidgets.QListWidgetItem):
         super().__init__()
         self.projectLabel = projectLabel
         self.setSizeHint(projectLabel.sizeHint())
-        
+
     def __lt__(self, other):
         '''Переопределение оператора < для сортировки по дедлайнам'''
         closestDeadline1 = self.projectLabel.project.getClosestDeadline()
@@ -299,8 +299,10 @@ class ProjectListItem(QtWidgets.QListWidgetItem):
         else:
             closestDeadline2 = None
 
-        closestDeadline1 = closestDeadline1.toPyDate() if closestDeadline1 != None else closestDeadline1
-        closestDeadline2 = closestDeadline2.toPyDate() if closestDeadline2 != None else closestDeadline2
+        closestDeadline1 = closestDeadline1.toPyDate(
+        ) if closestDeadline1 != None else closestDeadline1
+        closestDeadline2 = closestDeadline2.toPyDate(
+        ) if closestDeadline2 != None else closestDeadline2
         if closestDeadline1 and closestDeadline2:
             return closestDeadline1 < closestDeadline2
         else:

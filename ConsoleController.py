@@ -3,6 +3,7 @@ import os
 import shutil
 from datetime import datetime
 
+
 class Console():
     def __init__(self, projectWindow):
         self.projectWindow = projectWindow
@@ -40,14 +41,16 @@ class Console():
         if status:
             self.projectWindow.consoleOutput.setPlainText(
                 "Folder binded successfully!")
-            
+
             projectFolder = projectFolder.strip('"').strip("'")
-            slashIndex = projectFolder.rfind('\\') # не знаю, какой конкретно слэш будет в тексте пути, поэтому пробую оба варианта
+            # не знаю, какой конкретно слэш будет в тексте пути, поэтому пробую оба варианта
+            slashIndex = projectFolder.rfind('\\')
             if slashIndex == -1:
                 slashIndex = projectFolder.rfind('/')
 
             folderText = './' + projectFolder[slashIndex + 1:]
-            self.projectWindow.folderPathLabel.setPlainText(f"Текущая папка проекта: {folderText}")
+            self.projectWindow.folderPathLabel.setPlainText(
+                f"Текущая папка проекта: {folderText}")
             self.projectWindow.projectFolder = projectFolder
 
             if self.gitManager.isRepos:
@@ -64,7 +67,7 @@ class Console():
         else:
             return False
 
-    def checkDefaultTask(self, taskIndex, check: bool=True):
+    def checkDefaultTask(self, taskIndex, check: bool = True):
         '''Метод для отметки чекбоксов стандартных задач'''
         item = self.projectWindow.listWidget.item(taskIndex)
         if check:
@@ -82,10 +85,11 @@ class Console():
         current_date = datetime.now().date()
         lastCompletedTask = None
         closestDeadline = None
-    
+
         for i in range(self.projectWindow.listWidget.count()):
-            item_widget = self.projectWindow.listWidget.itemWidget(self.projectWindow.listWidget.item(i))
-            
+            item_widget = self.projectWindow.listWidget.itemWidget(
+                self.projectWindow.listWidget.item(i))
+
             if item_widget.checkbox.isChecked():
                 doneCount += 1
             else:
@@ -98,17 +102,18 @@ class Console():
             if item_widget.deadline and not item_widget.checkbox.isChecked():
                 # Преобразуем QDate в datetime.date для сравнения
                 deadline_date = item_widget.deadline.toPyDate()
-                
+
                 # Проверяем, что дедлайн еще не прошел
                 if deadline_date >= current_date:
                     if closestDeadline is None or deadline_date < closestDeadline.toPyDate():
                         closestDeadline = item_widget.deadline
 
         total_tasks = self.projectWindow.listWidget.count()
-        completion_percentage = (doneCount / total_tasks * 100) if total_tasks > 0 else 0
-        
+        completion_percentage = (
+            doneCount / total_tasks * 100) if total_tasks > 0 else 0
+
         res += f"{doneCount} tasks done, {notDoneCount} tasks left ({completion_percentage:.1f}% complete)\n"
-        
+
         if lastCompletedTask:
             res += f"last completed task: {lastCompletedTask.taskName.text()}\n"
         else:
@@ -118,8 +123,9 @@ class Console():
             res += f"closest deadline: {closestDeadline.toString('dd.MM.yy')}\n"
         else:
             res += "closest deadline: none\n"
-        
+
         self.projectWindow.consoleOutput.setPlainText(res)
+
 
 class GitManager:
     '''Управляет операциями с Git'''
@@ -188,8 +194,8 @@ class GitManager:
         if self.projectFolder:
             commitStatus = subprocess.run(
                 [self.gitPath, '-C', self.projectFolder, 'rev-list', '-n', '1', '--all'], capture_output=True, text=True)
-            
-            if commitStatus.returncode == 0 and commitStatus.stdout.strip(): # команда выполнилась успешно и есть вывод
+
+            if commitStatus.returncode == 0 and commitStatus.stdout.strip():  # команда выполнилась успешно и есть вывод
                 return True
             else:
                 return False
