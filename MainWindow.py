@@ -1,4 +1,5 @@
 import sys
+import Consts
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication
 from ProjectWindow import ProjectWindow, Task
@@ -18,7 +19,7 @@ class MainWindow(QMainWindow):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(Consts.WINDOW_WIDTH, Consts.WINDOW_HEIGHT)
 
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")

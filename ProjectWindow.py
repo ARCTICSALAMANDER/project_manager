@@ -1,5 +1,6 @@
 import string
 from datetime import datetime
+import Consts
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QGraphicsView
 from ConsoleController import Console
@@ -23,7 +24,7 @@ class ProjectWindow(QMainWindow):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(Consts.WINDOW_WIDTH, Consts.WINDOW_HEIGHT)
 
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
