@@ -7,15 +7,19 @@ from Idea_map import Idea, IdeaMap
 
 
 class ProjectWindow(QMainWindow):
-    def __init__(self, projectName: str, mainWindow):
+    def __init__(self, projectName: str, mainWindow, skipDefaultTasks=False):
         super().__init__()
         self.projectName = projectName
         self.mainWindow = mainWindow
         self.console = Console(self)
         self.projectFolder = ""
         self.setupUi(self)
-        self.addDefaultTasks()
+
+        if not skipDefaultTasks:
+            self.addDefaultTasks()
+
         self.completePercent = 0
+        self.closestDeadline = ""
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Project Manager")
@@ -165,6 +169,7 @@ class ProjectWindow(QMainWindow):
                     projectLabel.getProjectStatus()
                     break
 
+        self.mainWindow.sortProjectByClosestDeadline()
         self.mainWindow.show()
 
     def restore_console_prefix(self):
@@ -214,6 +219,27 @@ class ProjectWindow(QMainWindow):
     def executeCommand(self):
         self.console.commandExecuter()
 
+    def getClosestDeadline(self) -> QtCore.QDate | None:
+        '''Метод для получения ближайшего дедлайна. 
+        Вернет None, если дедлайнов у задач вообще нет, 
+        либо они все прошли, и объект типа QDate, 
+        если дедлайн есть'''
+        current_date = datetime.now().date()
+        closestDeadline = None
+        for i in range(self.listWidget.count()):
+            task = self.listWidget.itemWidget(self.listWidget.item(i))
+            if isinstance(task, Task):
+                if (task.deadline != None and task.deadline.isValid()) and not task.checkbox.isChecked():
+                    # Преобразуем QDate в datetime.date для сравнения
+                    deadline_date = task.deadline.toPyDate()
+                    
+                    # Проверяем, что дедлайн еще не прошел
+                    if deadline_date >= current_date:
+                        if closestDeadline is None or deadline_date < closestDeadline.toPyDate():
+                            closestDeadline = task.deadline
+
+        return closestDeadline
+
     def countCompletePercent(self) -> float:
         '''Метод для подсчета процента выполненных задач'''
         doneCount = 0
@@ -223,7 +249,10 @@ class ProjectWindow(QMainWindow):
                 if itemWidget.checkbox.isChecked():
                     doneCount += 1
 
-        return doneCount / self.listWidget.count() * 100
+        if self.listWidget.count():
+            return doneCount / self.listWidget.count() * 100
+        else:
+            return 0.0
 
 
 class Task(QtWidgets.QWidget):
@@ -255,6 +284,7 @@ class Task(QtWidgets.QWidget):
             padding: 3px;
         ''')
         self.checkbox.stateChanged.connect(self.selectCompletingTime)
+        self.checkbox.stateChanged.connect(self.setProjectStatus)
 
         self.taskLayout.addWidget(self.checkbox)
         self.taskLayout.addWidget(self.taskName)
@@ -302,18 +332,18 @@ class Task(QtWidgets.QWidget):
         self.dateWidget.hide()
         self.addDeadlineBtn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
         self.addDeadlineBtn.blockSignals(True)
+        self.projectWindow.mainWindow.sortProjectByClosestDeadline()
+
+    def setProjectStatus(self):
+        '''Метод для выставления статуса'''
+        self.projectWindow.mainWindow.updateProjectStatus(self.projectWindow.projectName)
 
     def selectCompletingTime(self):
         '''Метод для установки времени, когда задача была выполнена'''
         if self.checkbox.isChecked():
             self.completeTime = datetime.now()
 
-        for i in range(self.projectWindow.mainWindow.listWidget.count()):
-            item_widget = self.projectWindow.mainWindow.listWidget.itemWidget(
-                self.projectWindow.mainWindow.listWidget.item(i))
-            if item_widget.projectName == self.projectWindow.projectName:
-                item_widget.getProjectStatus()
-                break
+        self.projectWindow.mainWindow.updateProjectStatus(self.projectWindow.projectName)
 
     def deleteThisTask(self):
         '''Метод удаления задачи из списка задач'''

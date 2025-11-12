@@ -2,8 +2,8 @@ import sys
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QApplication
 from ProjectWindow import ProjectWindow, Task
-from Idea_map import Idea
 from SQLcontroller import DBManager
+from Idea_map import Idea
 
 
 class MainWindow(QMainWindow):
@@ -12,9 +12,9 @@ class MainWindow(QMainWindow):
         self.projects = {}
         self.projectsNames = []
         self.setupUi(self)
-        self.DBManager = DBManager(
-            self, MainWindow, ProjectWindow, ProjectLabel, Task, Idea)
+        self.DBManager = DBManager(self)
         self.DBManager.loadInfo()
+        self.sortProjectByClosestDeadline()
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -72,9 +72,6 @@ class MainWindow(QMainWindow):
         self.DBManager.updateInfo()
         super().closeEvent(event)
 
-    def setProjectName(self):
-        '''Метод для выбора названия проекта'''
-
     def addProject(self):
         '''Метод добавления проекта'''
         newProjectWindow = ProjectWindow("Новый проект", self)
@@ -82,10 +79,42 @@ class MainWindow(QMainWindow):
         newProjectLabel.initUi()
         newProjectWindow.projectNameLabel.setText(newProjectLabel.projectName)
         self.projects[newProjectLabel] = newProjectWindow
-        newProjectItem = QtWidgets.QListWidgetItem()
+
+        newProjectItem = ProjectListItem(newProjectLabel)
         newProjectItem.setSizeHint(newProjectLabel.sizeHint())
         self.listWidget.addItem(newProjectItem)
         self.listWidget.setItemWidget(newProjectItem, newProjectLabel)
+
+        newProjectLabel.getProjectStatus()
+        self.sortProjectByClosestDeadline()
+
+    def updateProjectStatus(self, project_name):
+        '''Обновление статуса конкретного проекта'''
+        for i in range(self.listWidget.count()):
+            projectLabel = self.listWidget.itemWidget(self.listWidget.item(i))
+            if isinstance(projectLabel, ProjectLabel):
+                projectLabel.getProjectStatus()
+                break
+
+    def createProjectFromDB(self, project_name):
+        '''Создание проекта при загрузке из БД'''
+        newProjectWindow = ProjectWindow(project_name, self, True)
+        newProjectLabel = ProjectLabel(newProjectWindow, self, skipDialog=True)
+        newProjectLabel.setProjectName(project_name)
+        
+        newProjectItem = ProjectListItem(newProjectLabel)
+        newProjectItem.setSizeHint(newProjectLabel.sizeHint())
+        self.listWidget.addItem(newProjectItem)
+        self.listWidget.setItemWidget(newProjectItem, newProjectLabel)
+
+        self.projectsNames.append(project_name)
+        self.projects[newProjectLabel] = newProjectWindow
+        
+        return newProjectLabel, newProjectWindow
+        
+    def sortProjectByClosestDeadline(self):
+        '''Сортировка по ближайшему дедлайну'''
+        self.listWidget.sortItems(QtCore.Qt.SortOrder.AscendingOrder)
 
 
 class ProjectLabel(QtWidgets.QWidget):
@@ -166,7 +195,8 @@ class ProjectLabel(QtWidgets.QWidget):
     def setProjectName(self, name: str):
         '''Метод для установки имени проекта для загружаемых проектов'''
         self.projectName = name
-        self.mainWindow.projectsNames.append(name)
+        if name not in self.mainWindow.projectsNames:
+            self.mainWindow.projectsNames.append(name)
         self.initUi()
 
     def getProjectStatus(self):
@@ -195,9 +225,13 @@ class ProjectLabel(QtWidgets.QWidget):
                 projectIndex = index
                 break
 
+        for i in range(len(self.mainWindow.projectsNames)):
+            if self.mainWindow.projectsNames[i] == self.projectNameLabel.text():
+                self.mainWindow.projectsNames.pop(i)
+                break
+
         helper = self.mainWindow.listWidget.takeItem(projectIndex)
         self.mainWindow.projects.pop(self)
-        self.mainWindow.projectsNames.pop(projectIndex)
         self.project.close()
 
 
@@ -248,6 +282,33 @@ class NameSelector(QtWidgets.QDialog):
             self.mainWindow.projectsNames.append(name)
             self.projectLabel.projectName = name
             self.accept()
+
+
+class ProjectListItem(QtWidgets.QListWidgetItem):
+    def __init__(self, projectLabel):
+        super().__init__()
+        self.projectLabel = projectLabel
+        self.setSizeHint(projectLabel.sizeHint())
+        
+    def __lt__(self, other):
+        '''Переопределение оператора < для сортировки по дедлайнам'''
+        closestDeadline1 = self.projectLabel.project.getClosestDeadline()
+        if isinstance(other, ProjectListItem):
+            closestDeadline2 = other.projectLabel.project.getClosestDeadline()
+        else:
+            closestDeadline2 = None
+
+        closestDeadline1 = closestDeadline1.toPyDate() if closestDeadline1 != None else closestDeadline1
+        closestDeadline2 = closestDeadline2.toPyDate() if closestDeadline2 != None else closestDeadline2
+        if closestDeadline1 and closestDeadline2:
+            return closestDeadline1 < closestDeadline2
+        else:
+            if closestDeadline1:
+                return True
+            elif closestDeadline2:
+                return False
+            else:
+                return False
 
 
 if __name__ == '__main__':
