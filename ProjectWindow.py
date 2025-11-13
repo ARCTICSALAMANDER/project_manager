@@ -204,6 +204,7 @@ class ProjectWindow(QMainWindow):
     def addDefaultTasks(self):
         '''Добавление стандартных задач в каждый проект'''
         self.addTask("Написать ТЗ", True)
+        auto_task = self.listWidget.itemWidget(self.listWidget.item(0))
 
         auto_task1 = Task(self, "Создать Git-репозиторий для проекта", True)
         auto_task1_item = QtWidgets.QListWidgetItem()
@@ -266,6 +267,8 @@ class Task(QtWidgets.QWidget):
         self.completeTime = None
 
         self.taskName = QtWidgets.QLineEdit(taskName, self)
+        if isDefault:
+            self.taskName.setEnabled(False)
         self.taskName.setFixedHeight(30)
         self.taskName.setStyleSheet('''
             background-color: rgb(83, 83, 83);
