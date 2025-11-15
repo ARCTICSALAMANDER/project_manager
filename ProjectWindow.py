@@ -87,6 +87,11 @@ class ProjectWindow(QMainWindow):
         self.treeView.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         self.treeView.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
+        self.buttonsContainer = QtWidgets.QWidget()
+        self.buttonsLayout = QtWidgets.QHBoxLayout(self.buttonsContainer)
+        self.buttonsLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonsLayout.setSpacing(10)
+
         self.addTaskButton = QtWidgets.QPushButton("Добавить задачу", self)
         self.addTaskButton.setStyleSheet('''
             border: 1px solid white;
@@ -94,7 +99,20 @@ class ProjectWindow(QMainWindow):
             border-radius: 3px;
             padding: 2px;
         ''')
+        self.buttonsLayout.addWidget(self.addTaskButton)
         self.addTaskButton.pressed.connect(self.addTask)
+
+        self.downloadTasksBtn = QtWidgets.QPushButton(
+            "Скачать задачи как txt файл", parent=self.centralwidget)
+        self.downloadTasksBtn.setObjectName("downloadTasksBtn")
+        self.downloadTasksBtn.setStyleSheet('''
+            border: 1px solid white;
+            background-color: rgb(30, 30, 30);
+            border-radius: 3px;
+            padding: 2px;
+        ''')
+        self.downloadTasksBtn.pressed.connect(self.downloadTasks)
+        self.buttonsLayout.addWidget(self.downloadTasksBtn)
 
         self.listWidget = QtWidgets.QListWidget(parent=self.treeCheckBoxCont)
         self.listWidget.setObjectName("listWidget")
@@ -107,7 +125,7 @@ class ProjectWindow(QMainWindow):
         self.listWidget.setSpacing(2)
 
         self.treeCheckBoxCont.addWidget(self.treeView)
-        self.treeCheckBoxCont.addWidget(self.addTaskButton)
+        self.treeCheckBoxCont.addWidget(self.buttonsContainer)
         self.treeCheckBoxCont.addWidget(self.listWidget)
 
         self.splitter = QtWidgets.QSplitter(parent=self.centralwidget)
@@ -255,6 +273,18 @@ class ProjectWindow(QMainWindow):
             return doneCount / self.listWidget.count() * 100
         else:
             return 0.0
+
+    def downloadTasks(self):
+        '''Метод для скачивания информации по задачам как файла.txt, изменит уже существующий файл есть такой есть'''
+        text = f"{self.projectName} TASKS LIST\n\n"
+        for i in range(self.listWidget.count()):
+            task = self.listWidget.itemWidget(self.listWidget.item(i))
+            if isinstance(task, Task):
+                text += f"{i + 1}. {task.taskName.text()}: \n\t{f"done at {task.completeTime}" if task.checkbox.isChecked(
+                ) else "not done yet"}, \n\t{task.deadline if task.deadline != None else "no deadline set"}\n"
+
+        with open(f"{self.projectName} tasks.txt", 'w', encoding='utf-8') as f:
+            f.write(text)
 
 
 class Task(QtWidgets.QWidget):
