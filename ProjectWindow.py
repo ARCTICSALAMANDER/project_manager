@@ -8,196 +8,197 @@ from Idea_map import Idea, IdeaMap
 
 
 class ProjectWindow(QMainWindow):
-    def __init__(self, projectName: str, mainWindow, skipDefaultTasks=False):
+    def __init__(self, project_name: str, main_window, skip_default_tasks=False):
         super().__init__()
-        self.projectName = projectName
-        self.mainWindow = mainWindow
+        self.project_name = project_name
+        self.main_window = main_window
         self.console = Console(self)
-        self.projectFolder = ""
-        self.setupUi(self)
+        self.project_folder = ""
+        self.setup_ui(self)
 
-        if not skipDefaultTasks:
-            self.addDefaultTasks()
+        if not skip_default_tasks:
+            self.add_default_tasks()
 
-        self.completePercent = 0
-        self.closestDeadline = ""
+        self.complete_percent = 0
+        self.closest_deadline = ""
 
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("Project Manager")
-        MainWindow.resize(Consts.WINDOW_WIDTH, Consts.WINDOW_HEIGHT)
+    def setup_ui(self, main_window):
+        main_window.setObjectName("Project Manager")
+        main_window.resize(Consts.WINDOW_WIDTH, Consts.WINDOW_HEIGHT)
 
-        self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
+        self.centralwidget = QtWidgets.QWidget(parent=main_window)
         self.centralwidget.setObjectName("centralwidget")
         self.centralwidget.setStyleSheet('''
             background-color: rgb(26, 26, 26);
             color: white;
         ''')
 
-        self.ConsoleSplitter = QtWidgets.QSplitter(parent=self.centralwidget)
-        self.ConsoleSplitter.setGeometry(QtCore.QRect(530, 40, 256, 511))
-        self.ConsoleSplitter.setOrientation(QtCore.Qt.Orientation.Vertical)
-        self.ConsoleSplitter.setObjectName("ConsoleSplitter")
+        self.console_splitter = QtWidgets.QSplitter(parent=self.centralwidget)
+        self.console_splitter.setGeometry(QtCore.QRect(530, 40, 256, 511))
+        self.console_splitter.setOrientation(QtCore.Qt.Orientation.Vertical)
+        self.console_splitter.setObjectName("ConsoleSplitter")
 
-        self.consoleInput = QtWidgets.QLineEdit(parent=self.ConsoleSplitter)
-        self.consoleInput.setObjectName("consoleInput")
-        self.consoleInput.insert("> ")
-        self.consoleInput.textChanged.connect(self.restore_console_prefix)
-        self.consoleInput.setStyleSheet('''
+        self.console_input = QtWidgets.QLineEdit(parent=self.console_splitter)
+        self.console_input.setObjectName("consoleInput")
+        self.console_input.insert("> ")
+        self.console_input.textChanged.connect(self.restore_console_prefix)
+        self.console_input.setStyleSheet('''
             background: black;
             color: white;
             font-size: 16px;
         ''')
-        self.consoleInput.returnPressed.connect(self.executeCommand)
+        self.console_input.returnPressed.connect(self.execute_command)
 
-        self.consoleOutput = QtWidgets.QTextBrowser(
-            parent=self.ConsoleSplitter)
-        self.consoleOutput.setObjectName("consoleOutput")
-        self.consoleOutput.setStyleSheet('''
+        self.console_output = QtWidgets.QTextBrowser(
+            parent=self.console_splitter)
+        self.console_output.setObjectName("consoleOutput")
+        self.console_output.setStyleSheet('''
             background: black;
             color: white;
             border-radius: 5px;
             font-size: 16px;
         ''')
-        self.consoleOutput.setPlainText(
+        self.console_output.setPlainText(
             'Type "help" to see the list of existing commands')
 
-        self.treeCheckBoxCont = QtWidgets.QSplitter(parent=self.centralwidget)
-        self.treeCheckBoxCont.setGeometry(QtCore.QRect(20, 40, 491, 511))
-        self.treeCheckBoxCont.setOrientation(QtCore.Qt.Orientation.Vertical)
-        self.treeCheckBoxCont.setObjectName("treeCheckBoxCont")
+        self.tree_check_box_cont = QtWidgets.QSplitter(parent=self.centralwidget)
+        self.tree_check_box_cont.setGeometry(QtCore.QRect(20, 40, 491, 511))
+        self.tree_check_box_cont.setOrientation(QtCore.Qt.Orientation.Vertical)
+        self.tree_check_box_cont.setObjectName("treeCheckBoxCont")
 
-        self.treeView = QGraphicsView(parent=self.treeCheckBoxCont)
-        self.treeView.setObjectName("treeView")
-        self.treeView.setStyleSheet('''
+        self.tree_view = QGraphicsView(parent=self.tree_check_box_cont)
+        self.tree_view.setObjectName("treeView")
+        self.tree_view.setStyleSheet('''
             background-color: rgb(15, 15, 15);
             border: 1px solid white;
             border-radius: 5px;
             color: white;
         ''')
-        self.ideaMap = IdeaMap(self)
-        self.ideaMap.setSceneRect(10, 40, 400, 150)
-        self.treeView.setScene(self.ideaMap)
+        self.idea_map = IdeaMap(self)
+        self.idea_map.setSceneRect(10, 40, 400, 150)
+        self.tree_view.setScene(self.idea_map)
         # разрешаем скролл
-        self.treeView.setHorizontalScrollBarPolicy(
+        self.tree_view.setHorizontalScrollBarPolicy(
             QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.treeView.setVerticalScrollBarPolicy(
+        self.tree_view.setVerticalScrollBarPolicy(
             QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         # разрешаем перетаскивать курсором
-        self.treeView.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        self.treeView.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.tree_view.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        self.tree_view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
 
-        self.buttonsContainer = QtWidgets.QWidget()
-        self.buttonsLayout = QtWidgets.QHBoxLayout(self.buttonsContainer)
-        self.buttonsLayout.setContentsMargins(0, 0, 0, 0)
-        self.buttonsLayout.setSpacing(10)
+        self.buttons_container = QtWidgets.QWidget()
+        self.buttons_layout = QtWidgets.QHBoxLayout(self.buttons_container)
+        self.buttons_layout.setContentsMargins(0, 0, 0, 0)
+        self.buttons_layout.setSpacing(10)
 
-        self.addTaskButton = QtWidgets.QPushButton("Добавить задачу", self)
-        self.addTaskButton.setStyleSheet('''
+        self.add_task_button = QtWidgets.QPushButton("Добавить задачу", self)
+        self.add_task_button.setStyleSheet('''
             border: 1px solid white;
             background-color: rgb(30, 30, 30);
             border-radius: 3px;
             padding: 2px;
         ''')
-        self.buttonsLayout.addWidget(self.addTaskButton)
-        self.addTaskButton.pressed.connect(self.addTask)
+        self.buttons_layout.addWidget(self.add_task_button)
+        self.add_task_button.pressed.connect(self.add_task)
 
-        self.downloadTasksBtn = QtWidgets.QPushButton(
+        self.download_tasks_btn = QtWidgets.QPushButton(
             "Скачать задачи как txt файл", parent=self.centralwidget)
-        self.downloadTasksBtn.setObjectName("downloadTasksBtn")
-        self.downloadTasksBtn.setStyleSheet('''
+        self.download_tasks_btn.setObjectName("downloadTasksBtn")
+        self.download_tasks_btn.setStyleSheet('''
             border: 1px solid white;
             background-color: rgb(30, 30, 30);
             border-radius: 3px;
             padding: 2px;
         ''')
-        self.downloadTasksBtn.pressed.connect(self.downloadTasks)
-        self.buttonsLayout.addWidget(self.downloadTasksBtn)
+        self.download_tasks_btn.pressed.connect(self.download_tasks)
+        self.buttons_layout.addWidget(self.download_tasks_btn)
 
-        self.listWidget = QtWidgets.QListWidget(parent=self.treeCheckBoxCont)
-        self.listWidget.setObjectName("listWidget")
-        self.listWidget.setStyleSheet('''
+        self.list_widget = QtWidgets.QListWidget(parent=self.tree_check_box_cont)
+        self.list_widget.setObjectName("listWidget")
+        self.list_widget.setStyleSheet('''
             background-color: rgb(15, 15, 15);
             border: 1px solid white;
             border-radius: 5px;
             color: white;
         ''')
-        self.listWidget.setSpacing(2)
+        self.list_widget.setSpacing(2)
 
-        self.treeCheckBoxCont.addWidget(self.treeView)
-        self.treeCheckBoxCont.addWidget(self.buttonsContainer)
-        self.treeCheckBoxCont.addWidget(self.listWidget)
+        self.tree_check_box_cont.addWidget(self.tree_view)
+        self.tree_check_box_cont.addWidget(self.buttons_container)
+        self.tree_check_box_cont.addWidget(self.list_widget)
 
         self.splitter = QtWidgets.QSplitter(parent=self.centralwidget)
         self.splitter.setGeometry(QtCore.QRect(20, 10, 491, 21))
         self.splitter.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.splitter.setObjectName("splitter")
 
-        self.backButton = QtWidgets.QPushButton(parent=self.splitter)
-        self.backButton.setObjectName("backButton")
-        self.backButton.setFixedWidth(70)
-        self.backButton.setStyleSheet('''
+        self.back_button = QtWidgets.QPushButton(parent=self.splitter)
+        self.back_button.setObjectName("backButton")
+        self.back_button.setFixedWidth(70)
+        self.back_button.setStyleSheet('''
             border: 1px solid white;
             background-color: rgb(15, 15, 15);
             border-radius: 3px;
             padding: 2px;
         ''')
-        self.backButton.pressed.connect(self.goBack)
+        self.back_button.pressed.connect(self.go_back)
 
-        self.projectNameLabel = QtWidgets.QLabel(parent=self.splitter)
-        self.projectNameLabel.setObjectName("projectName")
-        self.projectNameLabel.setText(self.projectName)
+        self.project_name_label = QtWidgets.QLabel(parent=self.splitter)
+        self.project_name_label.setObjectName("projectName")
+        self.project_name_label.setText(self.project_name)
 
-        self.folderPathLabel = QtWidgets.QTextBrowser(parent=self.splitter)
-        self.folderPathLabel.setObjectName("folderPath")
-        self.folderPathLabel.setMaximumHeight(30)
-        self.folderPathLabel.setPlainText(
-            f"Текущая папка проекта: {self.projectFolder if self.projectFolder else "еще не привязана"}")
+        self.folder_path_label = QtWidgets.QTextBrowser(parent=self.splitter)
+        self.folder_path_label.setObjectName("folderPath")
+        self.folder_path_label.setMaximumHeight(30)
+        self.folder_path_label.setPlainText(
+            f"Текущая папка проекта: {self.project_folder if self.project_folder else "еще не привязана"}")
 
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
+        main_window.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(parent=main_window)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
         self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
+        main_window.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(parent=main_window)
         self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        main_window.setStatusBar(self.statusbar)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslate_ui(main_window)
+        QtCore.QMetaObject.connectSlotsByName(main_window)
 
-    def retranslateUi(self, MainWindow):
+    def retranslate_ui(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Project Manager"))
-        self.backButton.setText(_translate("MainWindow", "<- Назад"))
-        self.projectNameLabel.setText(
-            _translate("MainWindow", self.projectName))
+        main_window.setWindowTitle(_translate("MainWindow", "Project Manager"))
+        self.back_button.setText(_translate("MainWindow", "<- Назад"))
+        self.project_name_label.setText(
+            _translate("MainWindow", self.project_name))
 
-    def closeEvent(self, event):
+    def close_event(self, event):
         '''Метод для сохранения информации после закрытия'''
-        self.mainWindow.DBManager.updateInfo()
+        self.main_window.db_manager.update_info()
         super().closeEvent(event)
 
-    def goBack(self):
+    def go_back(self):
+        '''Метод для перехода в главное окно'''
         self.hide()
-        if self.mainWindow.__class__.__name__ == 'MainWindow':
-            for i in range(self.mainWindow.listWidget.count()):
-                projectLabel = self.mainWindow.listWidget.itemWidget(
-                    self.mainWindow.listWidget.item(i))
-                if projectLabel.projectName == self.projectName:
-                    projectLabel.getProjectStatus()
+        if self.main_window.__class__.__name__ == 'MainWindow':
+            for i in range(self.main_window.list_widget.count()):
+                project_label = self.main_window.list_widget.itemWidget(
+                    self.main_window.list_widget.item(i))
+                if project_label.project_name == self.project_name:
+                    project_label.get_project_status()
                     break
 
-        self.mainWindow.sortProjectByClosestDeadline()
-        self.mainWindow.show()
+        self.main_window.sort_project_by_closest_deadline()
+        self.main_window.show()
 
     def restore_console_prefix(self):
         '''Эта функция восстанавливает префикс "> " в вводе консоли, если
         пользователь его удалит.'''
-        text = self.consoleInput.text()
+        text = self.console_input.text()
         if text[:2] != "> ":
             # это нужно, чтобы избежать рекурсивного вызова
-            self.consoleInput.blockSignals(True)
+            self.console_input.blockSignals(True)
             index = 0
             for i in range(len(text)):
                 if text[i] in string.ascii_lowercase:
@@ -205,49 +206,50 @@ class ProjectWindow(QMainWindow):
                     break
 
             if index > 0:  # специально для случая, если в консоли ничего нет, но пользователь нажмет бэкспейс
-                self.consoleInput.setText("> " + text[index:])
+                self.console_input.setText("> " + text[index:])
             else:
-                self.consoleInput.setText("> ")
+                self.console_input.setText("> ")
             # восстанавливаем передачу сигналов
-            self.consoleInput.blockSignals(False)
+            self.console_input.blockSignals(False)
 
-    def addTask(self, text: str = "Новая задача", isDefault: bool = False):
+    def add_task(self, text: str = "Новая задача", is_default: bool = False):
         '''Добавление задачи в список задач'''
-        task = Task(self, text, isDefault)
-        taskInList = QtWidgets.QListWidgetItem()
-        taskInList.setSizeHint(task.sizeHint())
-        self.listWidget.addItem(taskInList)
-        self.listWidget.setItemWidget(taskInList, task)
+        task = Task(self, text, is_default)
+        task_in_list = QtWidgets.QListWidgetItem()
+        task_in_list.setSizeHint(task.sizeHint())
+        self.list_widget.addItem(task_in_list)
+        self.list_widget.setItemWidget(task_in_list, task)
 
-    def addDefaultTasks(self):
+    def add_default_tasks(self):
         '''Добавление стандартных задач в каждый проект'''
-        self.addTask("Написать ТЗ", True)
-        auto_task = self.listWidget.itemWidget(self.listWidget.item(0))
+        self.add_task("Написать ТЗ", True)
+        auto_task = self.list_widget.itemWidget(self.list_widget.item(0))
 
         auto_task1 = Task(self, "Создать Git-репозиторий для проекта", True)
         auto_task1_item = QtWidgets.QListWidgetItem()
         auto_task1_item.setSizeHint(auto_task1.sizeHint())
-        self.listWidget.addItem(auto_task1_item)
-        self.listWidget.setItemWidget(auto_task1_item, auto_task1)
+        self.list_widget.addItem(auto_task1_item)
+        self.list_widget.setItemWidget(auto_task1_item, auto_task1)
 
         auto_task2 = Task(self, "Сделать первый коммит", True)
         auto_task2_item = QtWidgets.QListWidgetItem()
         auto_task2_item.setSizeHint(auto_task2.sizeHint())
-        self.listWidget.addItem(auto_task2_item)
-        self.listWidget.setItemWidget(auto_task2_item, auto_task2)
+        self.list_widget.addItem(auto_task2_item)
+        self.list_widget.setItemWidget(auto_task2_item, auto_task2)
 
-    def executeCommand(self):
-        self.console.commandExecuter()
+    def execute_command(self):
+        '''Метод для исполнения команд через консоль'''
+        self.console.command_executer()
 
-    def getClosestDeadline(self) -> QtCore.QDate | None:
+    def get_closest_deadline(self) -> QtCore.QDate | None:
         '''Метод для получения ближайшего дедлайна. 
         Вернет None, если дедлайнов у задач вообще нет, 
         либо они все прошли, и объект типа QDate, 
         если дедлайн есть'''
         current_date = datetime.now().date()
-        closestDeadline = None
-        for i in range(self.listWidget.count()):
-            task = self.listWidget.itemWidget(self.listWidget.item(i))
+        closest_deadline = None
+        for i in range(self.list_widget.count()):
+            task = self.list_widget.itemWidget(self.list_widget.item(i))
             if isinstance(task, Task):
                 if (task.deadline != None and task.deadline.isValid()) and not task.checkbox.isChecked():
                     # Преобразуем QDate в datetime.date для сравнения
@@ -255,52 +257,52 @@ class ProjectWindow(QMainWindow):
 
                     # Проверяем, что дедлайн еще не прошел
                     if deadline_date >= current_date:
-                        if closestDeadline is None or deadline_date < closestDeadline.toPyDate():
-                            closestDeadline = task.deadline
+                        if closest_deadline is None or deadline_date < closest_deadline.toPyDate():
+                            closest_deadline = task.deadline
 
-        return closestDeadline
+        return closest_deadline
 
-    def countCompletePercent(self) -> float:
+    def count_complete_percent(self) -> float:
         '''Метод для подсчета процента выполненных задач'''
-        doneCount = 0
-        for i in range(self.listWidget.count()):
-            itemWidget = self.listWidget.itemWidget(self.listWidget.item(i))
-            if isinstance(itemWidget, Task):
-                if itemWidget.checkbox.isChecked():
-                    doneCount += 1
+        done_count = 0
+        for i in range(self.list_widget.count()):
+            item_widget = self.list_widget.itemWidget(self.list_widget.item(i))
+            if isinstance(item_widget, Task):
+                if item_widget.checkbox.isChecked():
+                    done_count += 1
 
-        if self.listWidget.count():
-            return doneCount / self.listWidget.count() * 100
+        if self.list_widget.count():
+            return done_count / self.list_widget.count() * 100
         else:
             return 0.0
 
-    def downloadTasks(self):
+    def download_tasks(self):
         '''Метод для скачивания информации по задачам как файла.txt, изменит уже существующий файл есть такой есть'''
-        text = f"{self.projectName} TASKS LIST\n\n"
-        for i in range(self.listWidget.count()):
-            task = self.listWidget.itemWidget(self.listWidget.item(i))
+        text = f"{self.project_name} TASKS LIST\n\n"
+        for i in range(self.list_widget.count()):
+            task = self.list_widget.itemWidget(self.list_widget.item(i))
             if isinstance(task, Task):
-                text += f"{i + 1}. {task.taskName.text()}: \n\t{f"done at {task.completeTime}" if task.checkbox.isChecked(
+                text += f"{i + 1}. {task.task_name.text()}: \n\t{f"done at {task.complete_time}" if task.checkbox.isChecked(
                 ) else "not done yet"}, \n\t{task.deadline if task.deadline != None else "no deadline set"}\n"
 
-        with open(f"{self.projectName} tasks.txt", 'w', encoding='utf-8') as f:
+        with open(f"{self.project_name} tasks.txt", 'w', encoding='utf-8') as f:
             f.write(text)
 
 
 class Task(QtWidgets.QWidget):
-    def __init__(self, projectWindow: ProjectWindow, taskName: str = "Новая задача", isDefault: bool = False):
+    def __init__(self, project_window: ProjectWindow, task_name: str = "Новая задача", is_default: bool = False):
         super().__init__()
-        self.taskLayout = QtWidgets.QHBoxLayout()
-        self.projectWindow = projectWindow
+        self.task_layout = QtWidgets.QHBoxLayout()
+        self.project_window = project_window
 
-        self.isDefault = isDefault
-        self.completeTime = None
+        self.is_default = is_default
+        self.complete_time = None
 
-        self.taskName = QtWidgets.QLineEdit(taskName, self)
-        if isDefault:
-            self.taskName.setEnabled(False)
-        self.taskName.setFixedHeight(30)
-        self.taskName.setStyleSheet('''
+        self.task_name = QtWidgets.QLineEdit(task_name, self)
+        if is_default:
+            self.task_name.setEnabled(False)
+        self.task_name.setFixedHeight(30)
+        self.task_name.setStyleSheet('''
             background-color: rgb(83, 83, 83);
             border: none;
             border-radius: 0px;
@@ -317,75 +319,76 @@ class Task(QtWidgets.QWidget):
             margin: 0;
             padding: 3px;
         ''')
-        self.checkbox.stateChanged.connect(self.selectCompletingTime)
-        self.checkbox.stateChanged.connect(self.setProjectStatus)
+        self.checkbox.stateChanged.connect(self.select_completing_time)
+        self.checkbox.stateChanged.connect(self.set_project_status)
 
-        self.taskLayout.addWidget(self.checkbox)
-        self.taskLayout.addWidget(self.taskName)
+        self.task_layout.addWidget(self.checkbox)
+        self.task_layout.addWidget(self.task_name)
 
-        self.addDeadlineBtn = QtWidgets.QPushButton("Добавить дедлайн")
-        self.addDeadlineBtn.setFixedWidth(120)
-        self.addDeadlineBtn.setFixedHeight(30)
-        self.addDeadlineBtn.setStyleSheet('''
+        self.add_deadline_btn = QtWidgets.QPushButton("Добавить дедлайн")
+        self.add_deadline_btn.setFixedWidth(120)
+        self.add_deadline_btn.setFixedHeight(30)
+        self.add_deadline_btn.setStyleSheet('''
             background-color: rgb(83, 83, 83);
             border: 2px solid white;
             border-radius: 0px;
             padding: 3px;
         ''')
-        self.taskLayout.addWidget(self.addDeadlineBtn)
+        self.task_layout.addWidget(self.add_deadline_btn)
 
-        self.deleteTaskButton = QtWidgets.QPushButton("x", self)
-        self.deleteTaskButton.setFixedHeight(30)
-        self.deleteTaskButton.setFixedWidth(30)
-        self.deleteTaskButton.setStyleSheet('''
+        self.delete_task_button = QtWidgets.QPushButton("x", self)
+        self.delete_task_button.setFixedHeight(30)
+        self.delete_task_button.setFixedWidth(30)
+        self.delete_task_button.setStyleSheet('''
             background-color: #c82333;
             color: white;
             font-size: 20px;
         ''')
-        self.deleteTaskButton.pressed.connect(self.deleteThisTask)
-        self.taskLayout.addWidget(self.deleteTaskButton)
+        self.delete_task_button.pressed.connect(self.delete_this_task)
+        self.task_layout.addWidget(self.delete_task_button)
 
-        self.taskLayout.setSpacing(0)
-        self.taskLayout.setContentsMargins(3, 3, 3, 3)
-        self.setLayout(self.taskLayout)
+        self.task_layout.setSpacing(0)
+        self.task_layout.setContentsMargins(3, 3, 3, 3)
+        self.setLayout(self.task_layout)
 
         self.deadline = None
-        self.calendarWidget = QtWidgets.QCalendarWidget()
-        self.setDateBtn = QtWidgets.QPushButton("Выбрать эту дату")
-        self.setDateBtn.clicked.connect(self.selectDeadline)
-        self.dateLayout = QVBoxLayout()
-        self.dateLayout.addWidget(self.calendarWidget)
-        self.dateLayout.addWidget(self.setDateBtn)
-        self.dateWidget = QtWidgets.QWidget()
-        self.dateWidget.setLayout(self.dateLayout)
+        self.calendar_widget = QtWidgets.QCalendarWidget()
+        self.set_date_btn = QtWidgets.QPushButton("Выбрать эту дату")
+        self.set_date_btn.clicked.connect(self.select_deadline)
+        self.date_layout = QVBoxLayout()
+        self.date_layout.addWidget(self.calendar_widget)
+        self.date_layout.addWidget(self.set_date_btn)
+        self.date_widget = QtWidgets.QWidget()
+        self.date_widget.setLayout(self.date_layout)
         # показываем календарь если кнопка "Добавить дедлайн" была нажата
-        self.addDeadlineBtn.clicked.connect(lambda: self.dateWidget.show())
+        self.add_deadline_btn.clicked.connect(lambda: self.date_widget.show())
 
-    def selectDeadline(self):
-        self.deadline = self.calendarWidget.selectedDate()
-        self.dateWidget.hide()
-        self.addDeadlineBtn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
-        self.addDeadlineBtn.blockSignals(True)
-        self.projectWindow.mainWindow.sortProjectByClosestDeadline()
+    def select_deadline(self):
+        '''Метод для выбора дедлайна задачи через диалоговое окно с календарем'''
+        self.deadline = self.calendar_widget.selectedDate()
+        self.date_widget.hide()
+        self.add_deadline_btn.setText(f"До {self.deadline.toString("dd.MM.yy")}")
+        self.add_deadline_btn.blockSignals(True)
+        self.project_window.main_window.sort_project_by_closest_deadline()
 
-    def setProjectStatus(self):
+    def set_project_status(self):
         '''Метод для выставления статуса'''
-        self.projectWindow.mainWindow.updateProjectStatus(
-            self.projectWindow.projectName)
+        self.project_window.main_window.update_project_status(
+            self.project_window.project_name)
 
-    def selectCompletingTime(self):
+    def select_completing_time(self):
         '''Метод для установки времени, когда задача была выполнена'''
         if self.checkbox.isChecked():
-            self.completeTime = datetime.now()
+            self.complete_time = datetime.now()
 
-        self.projectWindow.mainWindow.updateProjectStatus(
-            self.projectWindow.projectName)
+        self.project_window.main_window.update_project_status(
+            self.project_window.project_name)
 
-    def deleteThisTask(self):
+    def delete_this_task(self):
         '''Метод удаления задачи из списка задач'''
-        if not self.isDefault:
-            # listWidget.count() - количество всех item у виджета
-            for index in range(self.projectWindow.listWidget.count()):
-                item = self.projectWindow.listWidget.item(index)
-                if self.projectWindow.listWidget.itemWidget(item) == self:
-                    self.projectWindow.listWidget.takeItem(index)
+        if not self.is_default:
+            # list_widget.count() - количество всех item у виджета
+            for index in range(self.project_window.list_widget.count()):
+                item = self.project_window.list_widget.item(index)
+                if self.project_window.list_widget.itemWidget(item) == self:
+                    self.project_window.list_widget.takeItem(index)

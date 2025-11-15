@@ -11,128 +11,128 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.projects = {}
-        self.projectsNames = []
-        self.setupUi(self)
-        self.DBManager = DBManager(self)
-        self.DBManager.loadInfo()
-        self.sortProjectByClosestDeadline()
+        self.projects_names = []
+        self.setup_ui(self)
+        self.db_manager = DBManager(self)
+        self.db_manager.load_info()
+        self.sort_project_by_closest_deadline()
 
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(Consts.WINDOW_WIDTH, Consts.WINDOW_HEIGHT)
+    def setup_ui(self, main_window):
+        main_window.setObjectName("MainWindow")
+        main_window.resize(Consts.WINDOW_WIDTH, Consts.WINDOW_HEIGHT)
 
-        self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
+        self.centralwidget = QtWidgets.QWidget(parent=main_window)
         self.centralwidget.setObjectName("centralwidget")
         self.centralwidget.setStyleSheet('''
             background-color: rgb(26, 26, 26);
             color: white;
         ''')
 
-        self.listWidget = QtWidgets.QListWidget(parent=self.centralwidget)
-        self.listWidget.setGeometry(QtCore.QRect(10, 40, 781, 511))
-        self.listWidget.setObjectName("listWidget")
-        self.listWidget.setStyleSheet('''
+        self.list_widget = QtWidgets.QListWidget(parent=self.centralwidget)
+        self.list_widget.setGeometry(QtCore.QRect(10, 40, 781, 511))
+        self.list_widget.setObjectName("listWidget")
+        self.list_widget.setStyleSheet('''
             background-color: rgb(15, 15, 15);
             border: 1px solid white;
             border-radius: 5px;
             color: white;
         ''')
 
-        self.addProjectBtn = QtWidgets.QPushButton(parent=self.centralwidget)
-        self.addProjectBtn.setGeometry(QtCore.QRect(10, 9, 111, 31))
-        self.addProjectBtn.setObjectName("addProjectBtn")
-        self.addProjectBtn.setStyleSheet('''
+        self.add_project_btn = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.add_project_btn.setGeometry(QtCore.QRect(10, 9, 111, 31))
+        self.add_project_btn.setObjectName("addProjectBtn")
+        self.add_project_btn.setStyleSheet('''
             background-color: rgb(15, 15, 15);
             border: 1px solid white;
             border-radius: 5px;
             color: white;
         ''')
-        self.addProjectBtn.pressed.connect(self.addProject)
+        self.add_project_btn.pressed.connect(self.add_project)
 
-        MainWindow.setCentralWidget(self.centralwidget)
+        main_window.setCentralWidget(self.centralwidget)
 
-        self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
+        self.menubar = QtWidgets.QMenuBar(parent=main_window)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
         self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
+        main_window.setMenuBar(self.menubar)
 
-        self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
+        self.statusbar = QtWidgets.QStatusBar(parent=main_window)
         self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        main_window.setStatusBar(self.statusbar)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslate_ui(main_window)
+        QtCore.QMetaObject.connectSlotsByName(main_window)
 
-    def retranslateUi(self, MainWindow):
+    def retranslate_ui(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.addProjectBtn.setText(_translate("MainWindow", "Добавить проект"))
+        main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.add_project_btn.setText(_translate("MainWindow", "Добавить проект"))
 
-    def closeEvent(self, event):
+    def close_event(self, event):
         '''Метод для сохранения информации после закрытия'''
-        self.DBManager.updateInfo()
+        self.db_manager.update_info()
         super().closeEvent(event)
 
-    def addProject(self):
+    def add_project(self):
         '''Метод добавления проекта'''
-        newProjectWindow = ProjectWindow("Новый проект", self)
-        newProjectLabel = ProjectLabel(newProjectWindow, self)
-        newProjectLabel.initUi()
-        newProjectWindow.projectNameLabel.setText(newProjectLabel.projectName)
-        self.projects[newProjectLabel] = newProjectWindow
+        new_project_window = ProjectWindow("Новый проект", self)
+        new_project_label = ProjectLabel(new_project_window, self)
+        new_project_label.init_ui()
+        new_project_window.project_name_label.setText(new_project_label.project_name)
+        self.projects[new_project_label] = new_project_window
 
-        newProjectItem = ProjectListItem(newProjectLabel)
-        newProjectItem.setSizeHint(newProjectLabel.sizeHint())
-        self.listWidget.addItem(newProjectItem)
-        self.listWidget.setItemWidget(newProjectItem, newProjectLabel)
+        new_project_item = ProjectListItem(new_project_label)
+        new_project_item.setSizeHint(new_project_label.sizeHint())
+        self.list_widget.addItem(new_project_item)
+        self.list_widget.setItemWidget(new_project_item, new_project_label)
 
-        newProjectLabel.getProjectStatus()
-        self.sortProjectByClosestDeadline()
+        new_project_label.get_project_status()
+        self.sort_project_by_closest_deadline()
 
-    def updateProjectStatus(self, project_name):
+    def update_project_status(self, project_name):
         '''Обновление статуса конкретного проекта'''
-        for i in range(self.listWidget.count()):
-            projectLabel = self.listWidget.itemWidget(self.listWidget.item(i))
-            if isinstance(projectLabel, ProjectLabel):
-                projectLabel.getProjectStatus()
+        for i in range(self.list_widget.count()):
+            project_label = self.list_widget.itemWidget(self.list_widget.item(i))
+            if isinstance(project_label, ProjectLabel):
+                project_label.get_project_status()
                 break
 
-    def createProjectFromDB(self, project_name):
+    def create_project_from_db(self, project_name):
         '''Создание проекта при загрузке из БД'''
-        newProjectWindow = ProjectWindow(project_name, self, True)
-        newProjectLabel = ProjectLabel(newProjectWindow, self, skipDialog=True)
-        newProjectLabel.setProjectName(project_name)
+        new_project_window = ProjectWindow(project_name, self, True)
+        new_project_label = ProjectLabel(new_project_window, self, skip_dialog=True)
+        new_project_label.set_project_name(project_name)
 
-        newProjectItem = ProjectListItem(newProjectLabel)
-        newProjectItem.setSizeHint(newProjectLabel.sizeHint())
-        self.listWidget.addItem(newProjectItem)
-        self.listWidget.setItemWidget(newProjectItem, newProjectLabel)
+        new_project_item = ProjectListItem(new_project_label)
+        new_project_item.setSizeHint(new_project_label.sizeHint())
+        self.list_widget.addItem(new_project_item)
+        self.list_widget.setItemWidget(new_project_item, new_project_label)
 
-        self.projectsNames.append(project_name)
-        self.projects[newProjectLabel] = newProjectWindow
+        self.projects_names.append(project_name)
+        self.projects[new_project_label] = new_project_window
 
-        return newProjectLabel, newProjectWindow
+        return new_project_label, new_project_window
 
-    def sortProjectByClosestDeadline(self):
+    def sort_project_by_closest_deadline(self):
         '''Сортировка по ближайшему дедлайну'''
-        self.listWidget.sortItems(QtCore.Qt.SortOrder.AscendingOrder)
+        self.list_widget.sortItems(QtCore.Qt.SortOrder.AscendingOrder)
 
 
 class ProjectLabel(QtWidgets.QWidget):
-    def __init__(self, project: ProjectWindow, mainWindow: MainWindow, skipDialog=False):
+    def __init__(self, project: ProjectWindow, main_window: MainWindow, skip_dialog=False):
         super().__init__()
         self.project = project
-        self.mainWindow = mainWindow
-        self.projectName = ""
+        self.main_window = main_window
+        self.project_name = ""
 
-        if not skipDialog:
-            self.nameSelector = NameSelector(self, self.mainWindow)
-            if self.nameSelector.exec() == QtWidgets.QDialog.DialogCode.Rejected:
+        if not skip_dialog:
+            self.name_selector = NameSelector(self, self.main_window)
+            if self.name_selector.exec() == QtWidgets.QDialog.DialogCode.Rejected:
                 # считает максимальную цифру, встречающуюся в безымянных проектах
                 # нужно на случай, если например были безымянные проекты 1-6
                 # и какой-то из них удалили
                 max_num = 0
-                for name in self.mainWindow.projectsNames:
+                for name in self.main_window.projects_names:
                     if name == "Безымянный проект":
                         max_num = max(max_num, 1)
                     elif name.startswith("Безымянный проект "):
@@ -147,168 +147,168 @@ class ProjectLabel(QtWidgets.QWidget):
                 else:
                     name = f"Безымянный проект {max_num + 1}"
 
-                self.mainWindow.projectsNames.append(name)
-                self.projectName = name
+                self.main_window.projects_names.append(name)
+                self.project_name = name
         else:
             pass
 
-    def initUi(self):
-        self.projectLayout = QtWidgets.QHBoxLayout()
+    def init_ui(self):
+        self.project_layout = QtWidgets.QHBoxLayout()
 
-        self.projectNameLabel = QtWidgets.QLabel(self.projectName, self)
-        self.projectNameLabel.setStyleSheet('''
+        self.project_name_label = QtWidgets.QLabel(self.project_name, self)
+        self.project_name_label.setStyleSheet('''
             color: white;
             font-size: 16px;
         ''')
-        self.projectNameLabel.setFixedHeight(30)
-        self.projectLayout.addWidget(self.projectNameLabel)
+        self.project_name_label.setFixedHeight(30)
+        self.project_layout.addWidget(self.project_name_label)
 
-        self.projectStatus = QtWidgets.QTextBrowser(parent=self)
-        self.getProjectStatus()
+        self.project_status = QtWidgets.QTextBrowser(parent=self)
+        self.get_project_status()
 
-        self.projectStatus.setStyleSheet('''
+        self.project_status.setStyleSheet('''
             font-size: 16px;
         ''')
-        self.projectStatus.setFixedSize(150, 30)
-        self.projectLayout.addWidget(self.projectStatus)
+        self.project_status.setFixedSize(150, 30)
+        self.project_layout.addWidget(self.project_status)
 
-        self.linkToProject = QtWidgets.QPushButton("К проекту", self)
-        self.linkToProject.setStyleSheet('''
+        self.link_to_project = QtWidgets.QPushButton("К проекту", self)
+        self.link_to_project.setStyleSheet('''
             color: white;
             font-size: 16px;
         ''')
-        self.linkToProject.setFixedSize(100, 30)
-        self.projectLayout.addWidget(self.linkToProject)
-        self.linkToProject.pressed.connect(self.goToProject)
+        self.link_to_project.setFixedSize(100, 30)
+        self.project_layout.addWidget(self.link_to_project)
+        self.link_to_project.pressed.connect(self.go_to_project)
 
-        self.deleteProjectBtn = QtWidgets.QPushButton("x", self)
-        self.deleteProjectBtn.setFixedSize(30, 30)
-        self.deleteProjectBtn.setStyleSheet('''
+        self.delete_project_btn = QtWidgets.QPushButton("x", self)
+        self.delete_project_btn.setFixedSize(30, 30)
+        self.delete_project_btn.setStyleSheet('''
             background-color: #c82333;
             font-size: 16px;
             color: white;
         ''')
-        self.deleteProjectBtn.pressed.connect(self.deleteProject)
-        self.projectLayout.addWidget(self.deleteProjectBtn)
+        self.delete_project_btn.pressed.connect(self.delete_project)
+        self.project_layout.addWidget(self.delete_project_btn)
 
-        self.setLayout(self.projectLayout)
+        self.setLayout(self.project_layout)
 
-    def setProjectName(self, name: str):
+    def set_project_name(self, name: str):
         '''Метод для установки имени проекта для загружаемых проектов'''
-        self.projectName = name
-        if name not in self.mainWindow.projectsNames:
-            self.mainWindow.projectsNames.append(name)
-        self.initUi()
+        self.project_name = name
+        if name not in self.main_window.projects_names:
+            self.main_window.projects_names.append(name)
+        self.init_ui()
 
-    def getProjectStatus(self):
+    def get_project_status(self):
         '''Метод для получения статуса проекта'''
-        status = self.project.countCompletePercent()
+        status = self.project.count_complete_percent()
         if status == 0:
-            self.projectStatus.setPlainText("Запланирован")
+            self.project_status.setPlainText("Запланирован")
         elif status < 100.0:
-            self.projectStatus.setPlainText("Начат")
+            self.project_status.setPlainText("Начат")
         else:
-            self.projectStatus.setPlainText("Закончен")
+            self.project_status.setPlainText("Закончен")
 
-    def goToProject(self):
+    def go_to_project(self):
         '''Метод перехода к окну проекта'''
-        self.mainWindow.hide()
+        self.main_window.hide()
         self.project.show()
 
-    def deleteProject(self):
+    def delete_project(self):
         '''Метод удаления проекта'''
-        projectIndex = 0
+        project_index = 0
 
-        for index, label in enumerate(self.mainWindow.projects.keys()):
-            item = self.mainWindow.listWidget.itemWidget(
-                self.mainWindow.listWidget.item(index))
-            if isinstance(item, ProjectLabel) and item.projectNameLabel.text() == self.projectNameLabel.text():
-                projectIndex = index
+        for index, label in enumerate(self.main_window.projects.keys()):
+            item = self.main_window.list_widget.itemWidget(
+                self.main_window.list_widget.item(index))
+            if isinstance(item, ProjectLabel) and item.project_name_label.text() == self.project_name_label.text():
+                project_index = index
                 break
 
-        for i in range(len(self.mainWindow.projectsNames)):
-            if self.mainWindow.projectsNames[i] == self.projectNameLabel.text():
-                self.mainWindow.projectsNames.pop(i)
+        for i in range(len(self.main_window.projects_names)):
+            if self.main_window.projects_names[i] == self.project_name_label.text():
+                self.main_window.projects_names.pop(i)
                 break
 
-        helper = self.mainWindow.listWidget.takeItem(projectIndex)
-        self.mainWindow.projects.pop(self)
+        helper = self.main_window.list_widget.takeItem(project_index)
+        self.main_window.projects.pop(self)
         self.project.close()
 
 
 class NameSelector(QtWidgets.QDialog):
     '''Класс для выбора названия проекта.'''
 
-    def __init__(self, projectLabel: ProjectLabel, mainWindow: MainWindow):
+    def __init__(self, project_label: ProjectLabel, main_window: MainWindow):
         super().__init__()
-        self.projectLabel = projectLabel
-        self.mainWindow = mainWindow
-        self.initUi()
+        self.project_label = project_label
+        self.main_window = main_window
+        self.init_ui()
 
-    def initUi(self):
+    def init_ui(self):
         self.setFixedSize(300, 150)
         self.setWindowTitle("Выберите название для проекта")
 
-        self.selectorLayout = QtWidgets.QVBoxLayout(self)
+        self.selector_layout = QtWidgets.QVBoxLayout(self)
 
         self.label = QtWidgets.QLabel("Как назвать новый проект?", self)
         self.label.setFixedHeight(30)
-        self.selectorLayout.addWidget(self.label)
+        self.selector_layout.addWidget(self.label)
 
-        self.nameSetter = QtWidgets.QLineEdit(self)
-        self.nameSetter.setFixedHeight(30)
-        self.selectorLayout.addWidget(self.nameSetter)
+        self.name_setter = QtWidgets.QLineEdit(self)
+        self.name_setter.setFixedHeight(30)
+        self.selector_layout.addWidget(self.name_setter)
 
-        self.statusLabel = QtWidgets.QLabel("", self)
-        self.statusLabel.setFixedHeight(30)
-        self.selectorLayout.addWidget(self.statusLabel)
+        self.status_label = QtWidgets.QLabel("", self)
+        self.status_label.setFixedHeight(30)
+        self.selector_layout.addWidget(self.status_label)
 
-        self.selectNameBtn = QtWidgets.QPushButton("Готово", self)
-        self.selectNameBtn.setFixedHeight(30)
-        self.selectNameBtn.setFixedWidth(80)
-        self.selectNameBtn.pressed.connect(self.checkName)
-        self.selectorLayout.addWidget(self.selectNameBtn)
+        self.select_name_btn = QtWidgets.QPushButton("Готово", self)
+        self.select_name_btn.setFixedHeight(30)
+        self.select_name_btn.setFixedWidth(80)
+        self.select_name_btn.pressed.connect(self.check_name)
+        self.selector_layout.addWidget(self.select_name_btn)
 
-    def checkName(self):
+    def check_name(self):
         '''Метод для проверки валидности имени проекта'''
-        name = self.nameSetter.text()
-        if name in self.mainWindow.projectsNames:
-            self.statusLabel.setText("Проект с таким именем уже есть")
+        name = self.name_setter.text()
+        if name in self.main_window.projects_names:
+            self.status_label.setText("Проект с таким именем уже есть")
         elif name == '' or name.count(' ') == len(name):
-            self.statusLabel.setText("Название не может быть пустой строкой")
+            self.status_label.setText("Название не может быть пустой строкой")
         elif name == "Безымянный проект" or name.startswith("Безымянный проект "):
-            self.statusLabel.setText(
+            self.status_label.setText(
                 "Это имя зарезервировано логикой приложения")
         else:
-            self.mainWindow.projectsNames.append(name)
-            self.projectLabel.projectName = name
+            self.main_window.projects_names.append(name)
+            self.project_label.project_name = name
             self.accept()
 
 
 class ProjectListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, projectLabel):
+    def __init__(self, project_label):
         super().__init__()
-        self.projectLabel = projectLabel
-        self.setSizeHint(projectLabel.sizeHint())
+        self.project_label = project_label
+        self.setSizeHint(project_label.sizeHint())
 
     def __lt__(self, other):
         '''Переопределение оператора < для сортировки по дедлайнам'''
-        closestDeadline1 = self.projectLabel.project.getClosestDeadline()
+        closest_deadline1 = self.project_label.project.get_closest_deadline()
         if isinstance(other, ProjectListItem):
-            closestDeadline2 = other.projectLabel.project.getClosestDeadline()
+            closest_deadline2 = other.project_label.project.get_closest_deadline()
         else:
-            closestDeadline2 = None
+            closest_deadline2 = None
 
-        closestDeadline1 = closestDeadline1.toPyDate(
-        ) if closestDeadline1 != None else closestDeadline1
-        closestDeadline2 = closestDeadline2.toPyDate(
-        ) if closestDeadline2 != None else closestDeadline2
-        if closestDeadline1 and closestDeadline2:
-            return closestDeadline1 < closestDeadline2
+        closest_deadline1 = closest_deadline1.toPyDate(
+        ) if closest_deadline1 != None else closest_deadline1
+        closest_deadline2 = closest_deadline2.toPyDate(
+        ) if closest_deadline2 != None else closest_deadline2
+        if closest_deadline1 and closest_deadline2:
+            return closest_deadline1 < closest_deadline2
         else:
-            if closestDeadline1:
+            if closest_deadline1:
                 return True
-            elif closestDeadline2:
+            elif closest_deadline2:
                 return False
             else:
                 return False
@@ -318,5 +318,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
     ex.show()
-    ex.DBManager.updateInfo()
+    ex.db_manager.update_info()
     sys.exit(app.exec())

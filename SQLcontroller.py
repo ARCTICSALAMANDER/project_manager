@@ -4,8 +4,8 @@ from PyQt6 import QtCore
 
 
 class DBManager:
-    def __init__(self, mainWindow):
-        self.mainWindow = mainWindow
+    def __init__(self, main_window):
+        self.main_window = main_window
         self.con = sqlite3.connect("ProjectManagerDB.sqlite")
         self.cur = self.con.cursor()
         try:
@@ -32,25 +32,25 @@ class DBManager:
         except sqlite3.OperationalError as e:
             print(e)
 
-    def updateInfo(self):
+    def update_info(self):
         '''Метод обновления информации в БД после закрытия приложения'''
         self.cur.execute("DELETE FROM ProjectsList")
         self.cur.execute("DELETE FROM Tasks")
         self.cur.execute("DELETE FROM ideas")
 
-        if self.mainWindow.__class__.__name__ == 'MainWindow':
-            for i in range(self.mainWindow.listWidget.count()):
-                projectLabel = self.mainWindow.listWidget.itemWidget(
-                    self.mainWindow.listWidget.item(i))
+        if self.main_window.__class__.__name__ == 'MainWindow':
+            for i in range(self.main_window.list_widget.count()):
+                project_label = self.main_window.list_widget.itemWidget(
+                    self.main_window.list_widget.item(i))
 
-                if projectLabel.__class__.__name__ == 'ProjectLabel':
+                if project_label.__class__.__name__ == 'ProjectLabel':
                     self.cur.execute(
                         '''INSERT INTO ProjectsList (projectID, project, projectFolder) VALUES (?, ?, ?)''',
-                        (i, projectLabel.projectName, projectLabel.project.projectFolder))
+                        (i, project_label.project_name, project_label.project.project_folder))
 
-                    for j in range(projectLabel.project.listWidget.count()):
-                        task = projectLabel.project.listWidget.itemWidget(
-                            projectLabel.project.listWidget.item(j))
+                    for j in range(project_label.project.list_widget.count()):
+                        task = project_label.project.list_widget.itemWidget(
+                            project_label.project.list_widget.item(j))
                         if task.__class__.__name__ == 'Task':
                             deadline = None
                             if task.deadline:
@@ -58,118 +58,115 @@ class DBManager:
 
                             self.cur.execute('''
                                 INSERT INTO Tasks (projectID, task, isDone, deadline, isDefault, completeTime) VALUES (?, ?, ?, ?, ?, ?)
-                            ''', (i, task.taskName.text(), task.checkbox.isChecked(), deadline, task.isDefault, task.completeTime))
+                            ''', (i, task.task_name.text(), task.checkbox.isChecked(), deadline, task.is_default, task.complete_time))
 
-            self.saveIdeas()
+            self.save_ideas()
 
         self.con.commit()
 
-    def saveIdeas(self):
-        for i in range(self.mainWindow.listWidget.count()):
-            projectLabel = self.mainWindow.listWidget.itemWidget(
-                self.mainWindow.listWidget.item(i))
+    def save_ideas(self):
+        '''Сохранение идей в БД'''
+        for i in range(self.main_window.list_widget.count()):
+            project_label = self.main_window.list_widget.itemWidget(
+                self.main_window.list_widget.item(i))
 
-            projectId_result = self.cur.execute('''
+            project_id_result = self.cur.execute('''
                 SELECT projectID FROM ProjectsList
                 WHERE project = ?
-            ''', (projectLabel.projectName,)).fetchone()
+            ''', (project_label.project_name,)).fetchone()
 
-            if projectId_result:
-                projectId = projectId_result[0]
-                rootIdea = projectLabel.project.ideaMap.rootIdea
+            if project_id_result:
+                project_id = project_id_result[0]
+                root_idea = project_label.project.idea_map.root_idea
 
                 self.cur.execute('''
                     INSERT INTO ideas (parent_id, project_id, text, tree_row, position, x_pos, y_pos) VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (0, projectId, rootIdea.textEdit.text(), rootIdea.treeRow, 0, rootIdea.pos().x(), rootIdea.pos().y()))
+                ''', (0, project_id, root_idea.text_edit.text(), root_idea.tree_row, 0, root_idea.pos().x(), root_idea.pos().y()))
 
-                parentId = self.cur.lastrowid
+                parent_id = self.cur.lastrowid
 
-                for j in range(len(rootIdea.childs)):
-                    self.saveIdea(rootIdea.childs[j], parentId, projectId, j)
+                for j in range(len(root_idea.childs)):
+                    self.save_idea(root_idea.childs[j], parent_id, project_id, j)
 
         self.con.commit()
 
-    def saveIdea(self, idea, parentId, projectId, position):
+    def save_idea(self, idea, parent_id, project_id, position):
         '''Метод для рекурсивного сохранения идей'''
         self.cur.execute('''
             INSERT INTO ideas (parent_id, project_id, text, tree_row, position, x_pos, y_pos) VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (parentId, projectId, idea.textEdit.text(), idea.treeRow, position, idea.pos().x(), idea.pos().y()))
+        ''', (parent_id, project_id, idea.text_edit.text(), idea.tree_row, position, idea.pos().x(), idea.pos().y()))
 
-        currentId = self.cur.lastrowid
+        current_id = self.cur.lastrowid
 
         for i in range(len(idea.childs)):
-            self.saveIdea(idea.childs[i], currentId, projectId, i)
+            self.save_idea(idea.childs[i], current_id, project_id, i)
 
-    def loadInfo(self):
-        '''Загрузка данных из БД - теперь используем существующие методы mainWindow'''
+    def load_info(self):
+        '''Загрузка данных из БД - теперь используем существующие методы main_window'''
         projects = self.cur.execute('''
             SELECT project, projectID FROM ProjectsList
         ''').fetchall()
 
         for project_name, project_id in projects:
-            if hasattr(self.mainWindow, 'createProjectFromDB'):
-                newProjectLabel, newProjectWindow = self.mainWindow.createProjectFromDB(
+            if hasattr(self.main_window, 'create_project_from_db'):
+                new_project_label, new_project_window = self.main_window.create_project_from_db(
                     project_name)
-                self.loadTasks(project_id, newProjectLabel)
-                self.loadIdeas(newProjectWindow, project_id)
+                self.load_tasks(project_id, new_project_label)
+                self.load_ideas(new_project_window, project_id)
 
-    def loadTasks(self, projectId: int, projectLabel):
+    def load_tasks(self, project_id: int, project_label):
         '''Метод для загрузки задач'''
         tasks = self.cur.execute(
             '''SELECT task, isDone, deadline, isDefault, taskID FROM Tasks
-            WHERE projectID = ? ORDER BY taskID''', (projectId,)).fetchall()
+            WHERE projectID = ? ORDER BY taskID''', (project_id,)).fetchall()
 
         for task_text, is_done, deadline_str, is_default, task_id in tasks:
-            projectLabel.project.addTask(task_text, is_default)
+            project_label.project.add_task(task_text, is_default)
 
-            last_index = projectLabel.project.listWidget.count() - 1
+            last_index = project_label.project.list_widget.count() - 1
             if last_index >= 0:
-                task = projectLabel.project.listWidget.itemWidget(
-                    projectLabel.project.listWidget.item(last_index))
+                task = project_label.project.list_widget.itemWidget(
+                    project_label.project.list_widget.item(last_index))
 
                 if is_done:
                     task.checkbox.setChecked(True)
 
                 if deadline_str:
-                    task.addDeadlineBtn.setText(
+                    task.add_deadline_btn.setText(
                         f"До {deadline_str.replace('-', '.')}")
                     task.deadline = QtCore.QDate(int(deadline_str[:2]), int(
                         deadline_str[3:5]), int(deadline_str[6:]))
-                    task.addDeadlineBtn.blockSignals(True)
+                    task.add_deadline_btn.blockSignals(True)
 
-        projectLabel.getProjectStatus()
+        project_label.get_project_status()
 
-    def loadIdeas(self, project, projectId: int):
-        '''Загрузка идей - упрощенная версия'''
-        try:
-            root_data = self.cur.execute(
-                '''SELECT text, x_pos, y_pos, id FROM ideas
-                WHERE project_id = ? AND parent_id = 0''', (projectId,)
-            ).fetchone()
+    def load_ideas(self, project, project_id: int):
+        '''Загрузка идей'''
+        root_data = self.cur.execute(
+            '''SELECT text, x_pos, y_pos, id FROM ideas
+            WHERE project_id = ? AND parent_id = 0''', (project_id,)
+        ).fetchone()
 
-            if root_data:
-                root_text, root_x, root_y, root_id = root_data
-                rootIdea = project.ideaMap.rootIdea
-                rootIdea.textEdit.setText(root_text)
-                rootIdea.setPos(root_x, root_y)
+        if root_data:
+            root_text, root_x, root_y, root_id = root_data
+            root_idea = project.idea_map.root_idea
+            root_idea.text_edit.setText(root_text)
+            root_idea.setPos(root_x, root_y)
 
-                self._loadChildIdeas(project, projectId, rootIdea, root_id)
+            self._load_child_ideas(project, project_id, root_idea, root_id)
 
-        except Exception as e:
-            print(f"Error loading ideas: {e}")
-
-    def _loadChildIdeas(self, project, projectId: int, parentIdea, parentDbId: int):
+    def _load_child_ideas(self, project, project_id: int, parent_idea, parent_db_id: int):
         '''Рекурсивная загрузка дочерних идей'''
         child_ideas = self.cur.execute(
             '''SELECT text, x_pos, y_pos, tree_row, id FROM ideas
-            WHERE project_id = ? AND parent_id = ?''', (projectId, parentDbId)
+            WHERE project_id = ? AND parent_id = ?''', (project_id, parent_db_id)
         ).fetchall()
 
         for text, x_pos, y_pos, tree_row, idea_id in child_ideas:
-            project.ideaMap.addIdea(text, parentIdea)
+            project.idea_map.add_idea(text, parent_idea)
 
-            if parentIdea.childs:
-                child_idea = parentIdea.childs[-1]
+            if parent_idea.childs:
+                child_idea = parent_idea.childs[-1]
                 child_idea.setPos(x_pos, y_pos)
 
-                self._loadChildIdeas(project, projectId, child_idea, idea_id)
+                self._load_child_ideas(project, project_id, child_idea, idea_id)

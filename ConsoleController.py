@@ -5,99 +5,101 @@ from datetime import datetime
 
 
 class Console():
-    def __init__(self, projectWindow):
-        self.projectWindow = projectWindow
+    def __init__(self, project_window):
+        self.project_window = project_window
         self.commands = ['help', 'bind_folder', 'show_statistics']
-        self.helpMessage = "PROJECT'S CONSOLE COMMANDS\nbind_folder <path to project's folder>: binds a folder to the project. After you bind a folder, this app will check for existing repository and the first commit.\n\nshow_statistics: shows your activity stats including last completed task, closest deadline and completion percent.\n\nhelp: show this message again"
-        self.gitManager = GitManager(projectWindow)
+        self.help_message = "PROJECT'S CONSOLE COMMANDS\nbind_folder <path to project's folder>: binds a folder to the project. After you bind a folder, this app will check for existing repository and the first commit.\n\n"
+        self.help_message += "show_statistics: shows your activity stats including last completed task, closest deadline and completion percent.\n\n"
+        self.help_message += "help: show this message again"
+        self.git_manager = GitManager(project_window)
 
-    def commandExecuter(self):
+    def command_executer(self):
         '''Метод исполнения команд'''
-        command = self.projectWindow.consoleInput.text()[2:]
+        command = self.project_window.console_input.text()[2:]
         space_index = command.find(' ') if command.find(
             ' ') != -1 else len(command)
         if command[:space_index] == 'help':
-            self.projectWindow.consoleOutput.setPlainText(self.helpMessage)
+            self.project_window.console_output.setPlainText(self.help_message)
         elif command[:space_index] == 'bind_folder':
-            status = self.bindFolder(command, space_index)
+            status = self.bind_folder(command, space_index)
             if not status:
                 return
         elif command[:space_index] == 'show_statistics':
             self.show_statistics()
         else:
-            self.projectWindow.consoleOutput.setPlainText(
+            self.project_window.console_output.setPlainText(
                 f"SYNTAX ERROR:\nthere is no command '{command[:space_index]}'")
 
-    def bindFolder(self, command: str, space_index: int) -> bool:
+    def bind_folder(self, command: str, space_index: int) -> bool:
         '''Метод привязки папки через Git'''
-        projectFolder = command[space_index + 1:]
-        status = self.gitManager.bindGit()
+        project_folder = command[space_index + 1:]
+        status = self.git_manager.bind_git()
         if not status:
-            self.projectWindow.consoleOutput.setPlainText(
+            self.project_window.console_output.setPlainText(
                 f"ERROR:\nGit not found. Check if it had been added to PATH")
 
-        status = self.gitManager.bindFolder(projectFolder)
-        folderText = ""
+        status = self.git_manager.bind_folder(project_folder)
+        folder_text = ""
         if status:
-            self.projectWindow.consoleOutput.setPlainText(
+            self.project_window.console_output.setPlainText(
                 "Folder binded successfully!")
 
-            projectFolder = projectFolder.strip('"').strip("'")
+            project_folder = project_folder.strip('"').strip("'")
             # не знаю, какой конкретно слэш будет в тексте пути, поэтому пробую оба варианта
-            slashIndex = projectFolder.rfind('\\')
-            if slashIndex == -1:
-                slashIndex = projectFolder.rfind('/')
+            slash_index = project_folder.rfind('\\')
+            if slash_index == -1:
+                slash_index = project_folder.rfind('/')
 
-            folderText = './' + projectFolder[slashIndex + 1:]
-            self.projectWindow.folderPathLabel.setPlainText(
-                f"Текущая папка проекта: {folderText}")
-            self.projectWindow.projectFolder = projectFolder
+            folder_text = './' + project_folder[slash_index + 1:]
+            self.project_window.folder_path_label.setPlainText(
+                f"Текущая папка проекта: {folder_text}")
+            self.project_window.project_folder = project_folder
 
-            if self.gitManager.isRepos:
-                self.checkDefaultTask(1, True)
+            if self.git_manager.is_repos:
+                self.check_default_task(1, True)
                 # проверяем, есть ли коммиты и отмечаем соответствующий чекбокс
-                if self.gitManager.firstCommitCheck():
-                    self.checkDefaultTask(2, True)
+                if self.git_manager.first_commit_check():
+                    self.check_default_task(2, True)
                 else:
-                    self.checkDefaultTask(2, False)
+                    self.check_default_task(2, False)
             else:
-                self.checkDefaultTask(1, False)
+                self.check_default_task(1, False)
 
             return True
         else:
             return False
 
-    def checkDefaultTask(self, taskIndex, check: bool = True):
+    def check_default_task(self, task_index, check: bool = True):
         '''Метод для отметки чекбоксов стандартных задач'''
-        item = self.projectWindow.listWidget.item(taskIndex)
+        item = self.project_window.list_widget.item(task_index)
         if check:
-            self.projectWindow.listWidget.itemWidget(
+            self.project_window.list_widget.itemWidget(
                 item).checkbox.setChecked(True)
         else:
-            self.projectWindow.listWidget.itemWidget(
+            self.project_window.list_widget.itemWidget(
                 item).checkbox.setChecked(False)
 
     def show_statistics(self):
         '''Метод для показа статистики по проекту'''
         res = "THIS PROJECT STATS:\n"
-        doneCount = 0
-        notDoneCount = 0
+        done_count = 0
+        not_done_count = 0
         current_date = datetime.now().date()
-        lastCompletedTask = None
-        closestDeadline = None
+        last_completed_task = None
+        closest_deadline = None
 
-        for i in range(self.projectWindow.listWidget.count()):
-            item_widget = self.projectWindow.listWidget.itemWidget(
-                self.projectWindow.listWidget.item(i))
+        for i in range(self.project_window.list_widget.count()):
+            item_widget = self.project_window.list_widget.itemWidget(
+                self.project_window.list_widget.item(i))
 
             if item_widget.checkbox.isChecked():
-                doneCount += 1
+                done_count += 1
             else:
-                notDoneCount += 1
+                not_done_count += 1
 
-            if item_widget.completeTime:
-                if lastCompletedTask is None or item_widget.completeTime > lastCompletedTask.completeTime:
-                    lastCompletedTask = item_widget
+            if item_widget.complete_time:
+                if last_completed_task is None or item_widget.complete_time > last_completed_task.complete_time:
+                    last_completed_task = item_widget
 
             if item_widget.deadline and not item_widget.checkbox.isChecked():
                 # Преобразуем QDate в datetime.date для сравнения
@@ -105,97 +107,97 @@ class Console():
 
                 # Проверяем, что дедлайн еще не прошел
                 if deadline_date >= current_date:
-                    if closestDeadline is None or deadline_date < closestDeadline.toPyDate():
-                        closestDeadline = item_widget.deadline
+                    if closest_deadline is None or deadline_date < closest_deadline.toPyDate():
+                        closest_deadline = item_widget.deadline
 
-        total_tasks = self.projectWindow.listWidget.count()
+        total_tasks = self.project_window.list_widget.count()
         completion_percentage = (
-            doneCount / total_tasks * 100) if total_tasks > 0 else 0
+            done_count / total_tasks * 100) if total_tasks > 0 else 0
 
-        res += f"{doneCount} tasks done, {notDoneCount} tasks left ({completion_percentage:.1f}% complete)\n"
+        res += f"{done_count} tasks done, {not_done_count} tasks left ({completion_percentage:.1f}% complete)\n"
 
-        if lastCompletedTask:
-            res += f"last completed task: {lastCompletedTask.taskName.text()}\n"
+        if last_completed_task:
+            res += f"last completed task: {last_completed_task.task_name.text()}\n"
         else:
             res += "last completed task: none\n"
 
-        if closestDeadline:
-            res += f"closest deadline: {closestDeadline.toString('dd.MM.yy')}\n"
+        if closest_deadline:
+            res += f"closest deadline: {closest_deadline.toString('dd.MM.yy')}\n"
         else:
             res += "closest deadline: none\n"
 
-        self.projectWindow.consoleOutput.setPlainText(res)
+        self.project_window.console_output.setPlainText(res)
 
 
 class GitManager:
     '''Управляет операциями с Git'''
 
-    def __init__(self, projectWindow):
-        self.projectWindow = projectWindow
-        self.gitPath = ""
-        self.projectFolder = None
-        self.isRepos = False
-        self.hasCommits = False
+    def __init__(self, project_window):
+        self.project_window = project_window
+        self.git_path = ""
+        self.project_folder = None
+        self.is_repos = False
+        self.has_commits = False
 
-    def bindGit(self) -> bool:
-        '''Привязка терминала Git через PATH.'''
-        gitPath = shutil.which("git")
-        if not gitPath:
+    def bind_git(self) -> bool:
+        '''Привязка терминала Git через PATH'''
+        git_path = shutil.which("git")
+        if not git_path:
             return False
         else:
-            self.gitPath = gitPath
+            self.git_path = git_path
             return True
 
-    def bindFolder(self, projectFolder: str) -> bool:
-        '''Привязка папки. Вернет False  в том случае, если папки не существует. Привяжет репозиторий, если он есть.'''
-        projectFolder = os.path.normpath(projectFolder)
-        if projectFolder[0] == '"':  # убираем кавычки, если они есть
-            projectFolder = projectFolder[1:]
+    def bind_folder(self, project_folder: str) -> bool:
+        '''Привязка папки. Вернет False в том случае, если папки не существует. Привяжет репозиторий, если он есть.'''
+        project_folder = os.path.normpath(project_folder)
+        if project_folder[0] == '"':  # убираем кавычки, если они есть
+            project_folder = project_folder[1:]
 
-        if projectFolder[-1] == '"':
-            projectFolder = projectFolder[:-1]
+        if project_folder[-1] == '"':
+            project_folder = project_folder[:-1]
 
-        self.isRepos = False
-        self.hasCommits = False
+        self.is_repos = False
+        self.has_commits = False
 
-        status = self.reposCheck(projectFolder)
+        status = self.repos_check(project_folder)
         if status:
-            self.projectFolder = projectFolder
+            self.project_folder = project_folder
             return True
         else:
             return False
 
-    def reposCheck(self, projectFolder) -> bool:
-        '''Проверка на наличие репозитория в привязанной папке. Вернет True если существует папка и укажет self.isRepos = True,
+    def repos_check(self, project_folder) -> bool:
+        '''Проверка на наличие репозитория в привязанной папке. Вернет True если существует папка и укажет self.is_repos = True,
         если есть репозиторий в ней, и False, если не существует папка'''
-        self.isRepos = False
+        self.is_repos = False
 
         status = subprocess.run(
-            [self.gitPath, '-C', projectFolder, 'status'], capture_output=True, text=True)
+            [self.git_path, '-C', project_folder, 'status'], capture_output=True, text=True)
         if status.returncode != 0:  # status будет равен 0 в том случае, если папка существует и в ней есть репозиторий
-            errorText = status.stderr.lower()  # смотрим текст ошибки
-            if "not a git repository" in errorText:  # если папка есть, но в ней нет репозитория
-                self.projectWindow.consoleOutput.setPlainText(
+            error_text = status.stderr.lower()  # смотрим текст ошибки
+            if "not a git repository" in error_text:  # если папка есть, но в ней нет репозитория
+                self.project_window.console_output.setPlainText(
                     "Folder binded successfully!")
                 return True
             else:  # если папки вообще нет
-                self.projectWindow.consoleOutput.setPlainText(
-                    f"FOLDER BINDING ERROR:\n{errorText}")
+                self.project_window.console_output.setPlainText(
+                    f"FOLDER BINDING ERROR:\n{error_text}")
                 return False
         else:
-            self.projectWindow.consoleOutput.setPlainText(
+            self.project_window.console_output.setPlainText(
                 "Folder binded successfully, repository detected!")
-            self.isRepos = True
+            self.is_repos = True
             return True
 
-    def firstCommitCheck(self) -> bool:
+    def first_commit_check(self) -> bool:
         '''Метод проверки на наличие коммитов. Вернет True, если коммиты есть,
         и False, если нет'''
-        if self.projectFolder:
-            commitStatus = subprocess.run(
-                [self.gitPath, '-C', self.projectFolder, 'rev-list', '-n', '1', '--all'], capture_output=True, text=True)
+        if self.project_folder:
+            commit_status = subprocess.run(
+                [self.git_path, '-C', self.project_folder, 'rev-list', '-n', '1', '--all'], capture_output=True, text=True)
 
-            if commitStatus.returncode == 0 and commitStatus.stdout.strip():  # команда выполнилась успешно и есть вывод
+            if commit_status.returncode == 0 and commit_status.stdout.strip():  # команда выполнилась успешно и есть вывод
                 return True
             else:
                 return False

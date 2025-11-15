@@ -5,79 +5,78 @@ from PyQt6.QtGui import QPen, QColor
 
 
 class Line(QGraphicsLineItem):
-    def __init__(self, line: QLineF, parentIdea, childIdea):
+    def __init__(self, line: QLineF, parent_idea, child_idea):
         super().__init__(line)
-        self.parentIdea = parentIdea
-        self.childIdea = childIdea
+        self.parent_idea = parent_idea
+        self.child_idea = child_idea
 
 
 class Idea(QGraphicsItem):
     '''Класс идеи'''
 
-    def __init__(self, scene, treeRow: int, text: str = "", parentIdea=None):
+    def __init__(self, scene, tree_row: int, text: str = "", parent_idea=None):
         super().__init__()
-        self.ideaMapScene = scene
-        self.parentIdea = parentIdea
+        self.idea_map_scene = scene
+        self.parent_idea = parent_idea
         self.childs = []
-        self.treeRow = treeRow
+        self.tree_row = tree_row
 
-        self.isDragging = False
-        self.oldPos = None
+        self.is_dragging = False
+        self.old_pos = None
 
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
         self.setFlag(
             QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
 
-        self.textEditProxy = QGraphicsProxyWidget(self)
-        self.textEdit = QLineEdit(text)
-        self.textEdit.setStyleSheet('''
+        self.text_edit_proxy = QGraphicsProxyWidget(self)
+        self.text_edit = QLineEdit(text)
+        self.text_edit.setStyleSheet('''
             background-color: black;
             color: white;
             border-radius: 5px;
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.textEditProxy.setWidget(self.textEdit)
+        self.text_edit_proxy.setWidget(self.text_edit)
         # сигнал изменения текста для обновления размера
-        self.textEdit.textChanged.connect(self.updateSize)
+        self.text_edit.textChanged.connect(self.update_size)
 
-        self.addButtonProxy = QGraphicsProxyWidget(self)
-        self.deleteButtonProxy = QGraphicsProxyWidget(self)
+        self.add_button_proxy = QGraphicsProxyWidget(self)
+        self.delete_button_proxy = QGraphicsProxyWidget(self)
 
-        self.addButton = QPushButton("+")
-        self.addButton.setFixedSize(20, 20)
-        self.addButton.setStyleSheet('''
+        self.add_button = QPushButton("+")
+        self.add_button.setFixedSize(20, 20)
+        self.add_button.setStyleSheet('''
             background-color: white;
             color: black;
             border-radius: 50%;
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.addButton.clicked.connect(
-            lambda: self.ideaMapScene.addIdea("", self))
-        self.addButtonProxy.setWidget(self.addButton)
+        self.add_button.clicked.connect(
+            lambda: self.idea_map_scene.add_idea("", self))
+        self.add_button_proxy.setWidget(self.add_button)
 
-        self.deleteButton = QPushButton("×")
-        self.deleteButton = QPushButton("×")
-        self.deleteButton.setFixedSize(20, 20)
-        self.deleteButton.setStyleSheet('''
+        self.delete_button = QPushButton("×")
+        self.delete_button.setFixedSize(20, 20)
+        self.delete_button.setStyleSheet('''
             background-color: #c82333;
             color: white;
             border-radius: 50%;
             font-weight: bold;
             font-size: 14px;
         ''')
-        self.deleteButton.pressed.connect(
-            lambda: self.ideaMapScene.deleteIdea(self))
-        self.deleteButtonProxy.setWidget(self.deleteButton)
+        self.delete_button.pressed.connect(
+            lambda: self.idea_map_scene.delete_idea(self))
+        self.delete_button_proxy.setWidget(self.delete_button)
 
-        self.parentLine: Line | None = None
-        self.childLines = []
+        self.parent_line: Line | None = None
+        self.child_lines = []
 
-        self.textEdit.textChanged.connect(self.updateAllLinesPos)
+        self.text_edit.textChanged.connect(self.update_all_lines_pos)
 
-    def updateSize(self):
+    def update_size(self):
         '''Обновляем размер при изменении текста'''
         self.prepareGeometryChange()
         self.update()
@@ -87,7 +86,7 @@ class Idea(QGraphicsItem):
         font_metrics = QtGui.QFontMetrics(QtGui.QFont())
 
         # Используем текущий текст из QLineEdit для расчета ширины
-        current_text = self.textEdit.text()
+        current_text = self.text_edit.text()
         text_width = font_metrics.horizontalAdvance(
             current_text) + 40  # +20px padding с каждой стороны
         if text_width < 100:  # минимальная ширина
@@ -109,15 +108,15 @@ class Idea(QGraphicsItem):
         painter.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         painter.drawRect(text_rect)
 
-        self.textEditProxy.setPos(0, 0)
-        self.textEdit.setFixedSize(
+        self.text_edit_proxy.setPos(0, 0)
+        self.text_edit.setFixedSize(
             int(text_rect.width()), int(text_rect.height()))
 
         # Ставим кнопки
         button_y = rect.height() - 35
         # числа 25 и 5 в формуле подогнаны по пикселям
-        self.addButtonProxy.setPos(rect.width() / 2 - 25, button_y)
-        self.deleteButtonProxy.setPos(rect.width() / 2 + 5, button_y)
+        self.add_button_proxy.setPos(rect.width() / 2 - 25, button_y)
+        self.delete_button_proxy.setPos(rect.width() / 2 + 5, button_y)
 
     def shape(self) -> QtGui.QPainterPath:
         '''Определитель точной области для клика и перетаскивания'''
@@ -128,152 +127,152 @@ class Idea(QGraphicsItem):
     def itemChange(self, change, value):
         """Обрабатываем изменения позиции и обновляем линии"""
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
-            self.updateAllLinesPos()
+            self.update_all_lines_pos()
 
         return super().itemChange(change, value)
 
-    def updateAllLinesPos(self):
+    def update_all_lines_pos(self):
         '''Метод для обновления позиций всех линий, соединенных с этой идеей'''
-        if self.parentLine:  # если вдруг изменили текст корневой идеи
-            self.updateLinePos(self.parentLine)
+        if self.parent_line:  # если вдруг изменили текст корневой идеи
+            self.update_line_pos(self.parent_line)
 
-        for i in range(len(self.childLines)):
-            self.updateLinePos(self.childLines[i])
+        for i in range(len(self.child_lines)):
+            self.update_line_pos(self.child_lines[i])
 
-    def updateLinePos(self, line: Line):
+    def update_line_pos(self, line: Line):
         '''метод для повторной отрисовки линий между идеями после изменений текста в них'''
-        parentRect = line.parentIdea.boundingRect()
-        childRect = line.childIdea.boundingRect()
-        point1 = QPointF(line.parentIdea.pos().x() + parentRect.width(),
-                         line.parentIdea.pos().y() + parentRect.height() - 50)
-        point2 = QPointF(line.childIdea.pos().x(),
-                         line.childIdea.pos().y() + childRect.height() / 2 - 15)
+        parent_rect = line.parent_idea.boundingRect()
+        child_rect = line.child_idea.boundingRect()
+        point1 = QPointF(line.parent_idea.pos().x() + parent_rect.width(),
+                         line.parent_idea.pos().y() + parent_rect.height() - 50)
+        point2 = QPointF(line.child_idea.pos().x(),
+                         line.child_idea.pos().y() + child_rect.height() / 2 - 15)
         new_line = QLineF(point1, point2)
         line.setLine(new_line)
 
-    def addChild(self, child) -> bool:
+    def add_child(self, child) -> bool:
         '''Метод добавления дочерней мысли'''
         if isinstance(child, Idea):
             self.childs.append(child)
-            child.parentIdea = self
+            child.parent_idea = self
             return True
         else:
             return False
 
-    def getText(self) -> str:
+    def get_text(self) -> str:
         '''Получение текста идеи'''
-        return self.textEdit.text()
+        return self.text_edit.text()
 
-    def setText(self, text: str):
+    def set_text(self, text: str):
         '''Установка текста идеи'''
-        self.textEdit.setText(text)
+        self.text_edit.setText(text)
 
 
 class IdeaMap(QGraphicsScene):
     '''Класс карты мыслей'''
 
-    def __init__(self, projectWindow):
-        self.projectWindow = projectWindow
-        super().__init__(self.projectWindow)
-        self.setViewportSizeToScene()
-        self.rootIdea = Idea(self, 0, text="Первая мысль")
-        self.addItem(self.rootIdea)
-        self.setIdeaPos(self.rootIdea)
+    def __init__(self, project_window):
+        self.project_window = project_window
+        super().__init__(self.project_window)
+        self.set_viewport_size_to_scene()
+        self.root_idea = Idea(self, 0, text="Первая мысль")
+        self.addItem(self.root_idea)
+        self.set_idea_pos(self.root_idea)
         self.lines = []  # список линий между идеями
 
         self.setItemIndexMethod(QGraphicsScene.ItemIndexMethod.NoIndex)
 
-    def updateAllLinesForIdea(self, idea: Idea):
+    def update_all_lines_for_idea(self, idea: Idea):
         '''Обновляем все линии, связанные с идеей'''
-        if idea.parentLine:
-            idea.updateLinePos(idea.parentLine)
+        if idea.parent_line:
+            idea.update_line_pos(idea.parent_line)
 
-        for child_line in idea.childLines:
-            idea.updateLinePos(child_line)
+        for child_line in idea.child_lines:
+            idea.update_line_pos(child_line)
 
         for child in idea.childs:
-            self.updateAllLinesForIdea(child)
+            self.update_all_lines_for_idea(child)
 
-    def setViewportSizeToScene(self):
+    def set_viewport_size_to_scene(self):
         '''Метод для получения размера viewport после его изменения лэйаутом'''
-        viewport = self.projectWindow.treeView.viewport()
+        viewport = self.project_window.tree_view.viewport()
         vp_size = viewport.size()
         self.setSceneRect(0, 0, vp_size.width(), vp_size.height())
 
-    def connectIdeas(self, parentIdea: Idea, childIdea: Idea) -> bool:
+    def connect_ideas(self, parent_idea: Idea, child_idea: Idea) -> bool:
         '''Метод для соединения двух идей линией'''
-        if childIdea in parentIdea.childs:
-            parentRect = parentIdea.boundingRect()
-            childRect = childIdea.boundingRect()
-            point1 = QPointF(parentIdea.pos().x() + parentRect.width(),
-                             parentIdea.pos().y() + parentRect.height() - 50)
-            point2 = QPointF(childIdea.pos().x(),
-                             childIdea.pos().y() + childRect.height() / 2 - 15)
+        if child_idea in parent_idea.childs:
+            parent_rect = parent_idea.boundingRect()
+            child_rect = child_idea.boundingRect()
+            point1 = QPointF(parent_idea.pos().x() + parent_rect.width(),
+                             parent_idea.pos().y() + parent_rect.height() - 50)
+            point2 = QPointF(child_idea.pos().x(),
+                             child_idea.pos().y() + child_rect.height() / 2 - 15)
 
-            line = Line(QLineF(point1, point2), parentIdea, childIdea)
+            line = Line(QLineF(point1, point2), parent_idea, child_idea)
             pen = QPen(QColor(255, 255, 255))
             pen.setWidth(1)
             line.setPen(pen)
             self.addItem(line)
 
-            parentIdea.childLines.append(line)
-            childIdea.parentLine = line
+            parent_idea.child_lines.append(line)
+            child_idea.parent_line = line
 
             return True
         else:
             return False
 
-    def addIdea(self, text: str, parentIdea: Idea) -> None:
+    def add_idea(self, text: str, parent_idea: Idea) -> None:
         '''Метод добавления идеи в карту мыслей'''
-        childIdea = Idea(self, parentIdea.treeRow + 1, text, parentIdea)
-        parentIdea.addChild(childIdea)
-        self.addItem(childIdea)
-        self.setIdeaPos(childIdea)
-        self.connectIdeas(parentIdea, childIdea)
+        child_idea = Idea(self, parent_idea.tree_row + 1, text, parent_idea)
+        parent_idea.add_child(child_idea)
+        self.addItem(child_idea)
+        self.set_idea_pos(child_idea)
+        self.connect_ideas(parent_idea, child_idea)
 
-    def deleteIdea(self, idea: Idea):
+    def delete_idea(self, idea: Idea):
         '''Метод для удаления идеи'''
-        if idea.parentIdea:
+        if idea.parent_idea:
             for i in range(len(idea.childs)):
-                self.deleteIdea(idea.childs[i])
+                self.delete_idea(idea.childs[i])
 
-            ideaIndex = idea.parentIdea.childs.index(idea)
-            helper = idea.parentIdea.childs.pop(ideaIndex)
-            self.removeItem(idea.parentLine)
+            idea_index = idea.parent_idea.childs.index(idea)
+            helper = idea.parent_idea.childs.pop(idea_index)
+            self.removeItem(idea.parent_line)
             self.removeItem(idea)
         else:
-            warningWindow = RootIdeaDeletionWarning()
-            warningWindow.exec()
+            warning_window = RootIdeaDeletionWarning()
+            warning_window.exec()
 
-    def getAllocatedIdeaHeight(self, idea: Idea):
+    def get_allocated_idea_height(self, idea: Idea):
         '''Метод для получения высоты, отведенной одной идее'''
-        if not idea.parentIdea:  # если идея корневая
+        if not idea.parent_idea:  # если идея корневая
             return self.height()
 
-        parentHeight = self.getAllocatedIdeaHeight(idea.parentIdea)
-        return parentHeight / len(idea.parentIdea.childs)
+        parent_height = self.get_allocated_idea_height(idea.parent_idea)
+        return parent_height / len(idea.parent_idea.childs)
 
-    def setIdeaPos(self, idea: Idea):
+    def set_idea_pos(self, idea: Idea):
         '''Метод для позиционирования идеи на сцене'''
         scene_height = self.height()
 
-        if idea.parentIdea:  # если идея не корневая
-            childIndex = idea.parentIdea.childs.index(idea)
+        if idea.parent_idea:  # если идея не корневая
+            child_index = idea.parent_idea.childs.index(idea)
 
-            x = idea.parentIdea.pos().x() + idea.parentIdea.boundingRect().width() + 20
+            x = idea.parent_idea.pos().x() + idea.parent_idea.boundingRect().width() + 20
 
-            if childIndex != 0:  # если ребенок не первый
-                if idea.parentIdea.parentIdea:
-                    parentHeight = self.getAllocatedIdeaHeight(idea.parentIdea)
-                    parentY = idea.parentIdea.pos().y()
+            if child_index != 0:  # если ребенок не первый
+                if idea.parent_idea.parent_idea:
+                    parent_height = self.get_allocated_idea_height(idea.parent_idea)
+                    parent_y = idea.parent_idea.pos().y()
                 else:
-                    parentHeight = scene_height
-                    parentY = 0
+                    parent_height = scene_height
+                    parent_y = 0
 
-                y = parentY + (childIndex * (parentHeight /
-                               len(idea.parentIdea.childs)))
+                y = parent_y + (child_index * (parent_height /
+                               len(idea.parent_idea.childs)))
             else:
-                y = idea.parentIdea.pos().y()
+                y = idea.parent_idea.pos().y()
         else:  # если корневая
             x = 0
             y = scene_height / 2
@@ -286,24 +285,24 @@ class RootIdeaDeletionWarning(QtWidgets.QDialog):
 
     def __init__(self):
         super().__init__()
-        self.initUi()
-        self.okBtn.pressed.connect(self.accept)
+        self.init_ui()
+        self.ok_btn.pressed.connect(self.accept)
 
-    def initUi(self):
-        self.selfLayout = QtWidgets.QVBoxLayout(self)
+    def init_ui(self):
+        self.self_layout = QtWidgets.QVBoxLayout(self)
         self.setFixedSize(270, 350)
         self.setWindowTitle("Предупреждение")
 
-        self.imageLabel = QtWidgets.QLabel(self)
+        self.image_label = QtWidgets.QLabel(self)
         pixmap = QtGui.QPixmap("./restriction_image.jpg")
-        self.imageLabel.setPixmap(pixmap)
-        self.imageLabel.setFixedSize(300, 300)
-        self.selfLayout.addWidget(self.imageLabel)
+        self.image_label.setPixmap(pixmap)
+        self.image_label.setFixedSize(300, 300)
+        self.self_layout.addWidget(self.image_label)
 
         self.label = QtWidgets.QLabel("Нельзя удалить корневую идею.", self)
         self.label.setFixedHeight(30)
-        self.selfLayout.addWidget(self.label)
+        self.self_layout.addWidget(self.label)
 
-        self.okBtn = QtWidgets.QPushButton("OK", self)
-        self.okBtn.setFixedSize(60, 30)
-        self.selfLayout.addWidget(self.okBtn)
+        self.ok_btn = QtWidgets.QPushButton("OK", self)
+        self.ok_btn.setFixedSize(60, 30)
+        self.self_layout.addWidget(self.ok_btn)
