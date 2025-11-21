@@ -223,22 +223,24 @@ class IdeaMap(QGraphicsScene):
         else:
             return False
 
-    def addIdea(self, text: str, parentIdea: Idea) -> None:
+    def addIdea(self, text: str, parentIdea: Idea, skipLineConnection=False) -> None:
         '''Метод добавления идеи в карту мыслей'''
         childIdea = Idea(self, parentIdea.treeRow + 1, text, parentIdea)
         parentIdea.addChild(childIdea)
         self.addItem(childIdea)
         self.setIdeaPos(childIdea)
-        self.connectIdeas(parentIdea, childIdea)
+        if not skipLineConnection:
+            self.connectIdeas(parentIdea, childIdea)
 
     def deleteIdea(self, idea: Idea):
         '''Метод для удаления идеи'''
         if idea.parentIdea:
-            for i in range(len(idea.childs)):
+            for i in range(len(idea.childs) - 1, -1, -1):
                 self.deleteIdea(idea.childs[i])
 
             ideaIndex = idea.parentIdea.childs.index(idea)
             helper = idea.parentIdea.childs.pop(ideaIndex)
+            helper = idea.parentIdea.childLines.pop(ideaIndex)
             self.removeItem(idea.parentLine)
             self.removeItem(idea)
         else:

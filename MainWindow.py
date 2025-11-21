@@ -108,7 +108,6 @@ class MainWindow(QMainWindow):
         self.listWidget.addItem(newProjectItem)
         self.listWidget.setItemWidget(newProjectItem, newProjectLabel)
 
-        self.projectsNames.append(project_name)
         self.projects[newProjectLabel] = newProjectWindow
 
         return newProjectLabel, newProjectWindow

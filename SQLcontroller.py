@@ -166,10 +166,11 @@ class DBManager:
         ).fetchall()
 
         for text, x_pos, y_pos, tree_row, idea_id in child_ideas:
-            project.ideaMap.addIdea(text, parentIdea)
+            project.ideaMap.addIdea(text, parentIdea, skipLineConnection=True)
 
             if parentIdea.childs:
                 child_idea = parentIdea.childs[-1]
                 child_idea.setPos(x_pos, y_pos)
+                project.ideaMap.connectIdeas(parentIdea, child_idea)
 
                 self._loadChildIdeas(project, projectId, child_idea, idea_id)
